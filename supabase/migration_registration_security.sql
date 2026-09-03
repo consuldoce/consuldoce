@@ -16,7 +16,11 @@ begin
   for i in 1..8 loop
     total := total + substr(v,i,1)::integer * (9-i);
   end loop;
-  check_digit := (11 - (total % 11)) % 10;
+  if (total % 11) in (0,1) then
+    check_digit := 0;
+  else
+    check_digit := 11 - (total % 11);
+  end if;
   return check_digit = substr(v,9,1)::integer;
 end;
 $$;

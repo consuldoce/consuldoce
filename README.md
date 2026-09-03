@@ -224,3 +224,8 @@ Em **Authentication → URL Configuration**, adicione como Redirect URL o endere
 `https://consuldoce.pages.dev/?recovery=1#/reset-password`
 
 Se também utilizar um domínio próprio, adicione a URL equivalente desse domínio. O frontend nunca recebe nem armazena a service-role key.
+
+
+### Validação NIF
+
+A validação aceita NIFs introduzidos com espaços (por exemplo `519 372 719`) ou apenas dígitos. O algoritmo usa módulo 11 e trata corretamente os casos em que o resultado é 10 ou 11, convertendo o dígito de controlo para 0. O NIF `519372719` passa a validação matemática.

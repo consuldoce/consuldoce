@@ -239,3 +239,10 @@ A validação aceita NIFs introduzidos com espaços (por exemplo `519 372 719`) 
 - Se o cliente preencher o NIF, este é validado e não podem existir NIFs duplicados.
 - O email continua obrigatório e único.
 - A migração `supabase/migration_registration_security.sql` deve ser executada/atualizada no Supabase para permitir clientes sem NIF.
+
+
+## Política atual de NIF
+
+O NIF é obrigatório no registo do cliente e é usado como identificador único.
+Nesta versão, o sistema **não valida o dígito de controlo nem a validade fiscal do NIF**.
+Apenas normaliza o valor e impede NIFs vazios e duplicados. A validação formal poderá ser reativada numa fase posterior.

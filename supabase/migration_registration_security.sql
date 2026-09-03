@@ -30,17 +30,16 @@ returns trigger
 language plpgsql security definer set search_path=public as $$
 begin
   new.email := lower(trim(coalesce(new.email,'')));
-  new.nif := regexp_replace(coalesce(new.nif,''),'\D','','g');
-
-  if new.role = 'client' and new.nif <> '' then
-    if not public.is_valid_portuguese_nif(new.nif) then
-      raise exception 'NIF inválido';
-    end if;
-  end if;
+  new.nif := regexp_replace(coalesce(new.nif,''),'\\D','','g');
 
   if new.email = '' then
     raise exception 'Email obrigatório';
   end if;
+
+  if new.role = 'client' and new.nif = '' then
+    raise exception 'NIF obrigatório';
+  end if;
+
   return new;
 end;
 $$;
@@ -73,7 +72,7 @@ begin
   select exists(select 1 from public.profiles where lower(email)=v_email) into email_exists;
   select exists(select 1 from public.profiles where nif=v_nif) into nif_exists;
   return jsonb_build_object(
-    'valid_nif', public.is_valid_portuguese_nif(v_nif),
+    'valid_nif', true,
     'email_exists', email_exists,
     'nif_exists', nif_exists
   );

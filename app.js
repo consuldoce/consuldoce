@@ -1,6 +1,6 @@
 const cfg = window.CONSULDOCE_CONFIG || {};
 const { createClient } = window.supabase || {};
-const sb = createClient ? createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY) : null;
+const sb = createClient ? createClient(cfg.SUPABASE_URL, cfg.SUPABASE_PUBLISHABLE_KEY) : null;
 
 const state = { session:null, profile:null, products:[], categories:[], cart:loadCart(), route:location.hash||'#/catalog', authMode:'login', adminTab:'orders', importMode:'articles', loading:false };
 const app = document.getElementById('app');

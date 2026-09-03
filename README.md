@@ -169,3 +169,8 @@ O frontend está preparado para `https://consuldoce.pages.dev/`. Quando existir 
 A inicialização do frontend é tolerante a falhas: o ecrã de autenticação é renderizado antes da consulta de sessão ao Supabase e erros de inicialização são apresentados ao utilizador. O service worker não interceta navegações HTML e a shell usa uma versão de cache nova para evitar que deployments antigos deixem a aplicação presa numa versão anterior.
 
 Em Cloudflare Pages, publicar todos os ficheiros da raiz do projeto. Não é necessário configurar uma build command; o site é uma aplicação estática.
+
+
+## Correção de arranque
+
+A versão atual usa `SUPABASE_PUBLISHABLE_KEY` no frontend, compatível com a chave `sb_publishable_...` configurada em `config.js`. A chave é pública por natureza; nunca deve ser substituída por uma `service_role` key.

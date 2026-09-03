@@ -25,6 +25,13 @@ create table if not exists public.profiles (
   full_name text not null default '',
   nif text not null default '',
   address text not null default '',
+  phone_country_code text not null default '+351',
+  phone_number text not null default '',
+  address_line1 text not null default '',
+  address_line2 text not null default '',
+  postal_code text not null default '',
+  postal_locality text not null default '',
+  country text not null default 'Portugal',
   role public.user_role not null default 'client',
   created_at timestamptz not null default now()
 );
@@ -178,16 +185,45 @@ security definer
 set search_path = public
 as $$
 begin
-  insert into public.profiles(id, email, full_name, nif, address, role)
+  insert into public.profiles(
+    id, email, full_name, nif, address,
+    phone_country_code, phone_number,
+    address_line1, address_line2, postal_code, postal_locality, country,
+    role
+  )
   values (
     new.id,
     lower(trim(coalesce(new.email,''))),
     coalesce(new.raw_user_meta_data->>'full_name',''),
     regexp_replace(coalesce(new.raw_user_meta_data->>'nif',''),'\D','','g'),
-    coalesce(new.raw_user_meta_data->>'address',''),
+    trim(concat_ws(', ',
+      nullif(trim(coalesce(new.raw_user_meta_data->>'address_line1','')),''),
+      nullif(trim(coalesce(new.raw_user_meta_data->>'address_line2','')),''),
+      nullif(trim(coalesce(new.raw_user_meta_data->>'postal_code','')),''),
+      nullif(trim(coalesce(new.raw_user_meta_data->>'postal_locality','')),''),
+      nullif(trim(coalesce(new.raw_user_meta_data->>'country','Portugal')),'')
+    )),
+    coalesce(nullif(trim(new.raw_user_meta_data->>'phone_country_code'),''), '+351'),
+    trim(coalesce(new.raw_user_meta_data->>'phone_number','')),
+    trim(coalesce(new.raw_user_meta_data->>'address_line1','')),
+    trim(coalesce(new.raw_user_meta_data->>'address_line2','')),
+    trim(coalesce(new.raw_user_meta_data->>'postal_code','')),
+    trim(coalesce(new.raw_user_meta_data->>'postal_locality','')),
+    coalesce(nullif(trim(new.raw_user_meta_data->>'country'),''), 'Portugal'),
     'client'
   )
-  on conflict (id) do update set email = excluded.email;
+  on conflict (id) do update set
+    email = excluded.email,
+    full_name = excluded.full_name,
+    nif = excluded.nif,
+    address = excluded.address,
+    phone_country_code = excluded.phone_country_code,
+    phone_number = excluded.phone_number,
+    address_line1 = excluded.address_line1,
+    address_line2 = excluded.address_line2,
+    postal_code = excluded.postal_code,
+    postal_locality = excluded.postal_locality,
+    country = excluded.country;
   return new;
 end;
 $$;
@@ -241,6 +277,15 @@ where nif is not null and nif <> '';
 create unique index if not exists profiles_email_lower_unique_idx
 on public.profiles(lower(email))
 where email is not null and trim(email) <> '';
+
+-- Structured customer contact/address fields. The legacy address column is retained for compatibility.
+comment on column public.profiles.phone_country_code is 'Indicativo telefónico internacional, ex. +351';
+comment on column public.profiles.phone_number is 'Número de telemóvel sem o indicativo';
+comment on column public.profiles.address_line1 is 'Endereço principal';
+comment on column public.profiles.address_line2 is 'Andar, lote, fração, porta, etc.';
+comment on column public.profiles.postal_code is 'Código postal';
+comment on column public.profiles.postal_locality is 'Localidade postal';
+comment on column public.profiles.country is 'País da morada';
 
 -- -----------------------------------------------------------------------------
 -- Row Level Security

@@ -1,6 +1,15 @@
-# CONSULDOCE — Catálogo B2B v17
+# CONSULDOCE — Catálogo B2B v18
 
-Versão consolidada com layout responsivo reforçado para iPhone/iOS e Android, mantendo o catálogo B2B, administração, encomendas, stock, PWA, autenticação e integração Supabase/Resend.
+Versão consolidada com layout responsivo reforçado para iPhone/iOS e Android, mantendo o catálogo B2B, administração, encomendas, stock, PWA, autenticação e integração Supabase/Resend. A v18 acrescenta contacto telefónico estruturado e morada completa no registo de cliente.
+
+### Alterações v18
+- Registo de cliente com número de telemóvel obrigatório.
+- Seletor de país/indicativo telefónico com bandeira e indicativo internacional, Portugal pré-selecionado.
+- Morada estruturada em endereço principal, complemento (andar/lote/fração/etc.), código postal, localidade postal e país.
+- Lista de países em português para a morada, com Portugal pré-selecionado.
+- Os novos dados são gravados no perfil Supabase e a coluna `address` antiga é mantida para compatibilidade.
+- Backoffice de clientes mostra telemóvel e morada estruturada.
+- O email de encomenda passa a incluir o telemóvel e a morada completa.
 
 ### Correção v17
 - Cabeçalho responsivo em ecrãs pequenos, sem sobreposição de logótipo e botões.
@@ -17,9 +26,10 @@ Catálogo B2B privado da CONSULDOCE, publicado como aplicação estática no Clo
 ## Funcionalidades implementadas
 
 ### Cliente
-- Registo de cliente com **nome/empresa, NIF obrigatório, morada, email e palavra-passe**.
+- Registo de cliente com **nome/empresa, NIF obrigatório, telemóvel, morada estruturada, email e palavra-passe**.
 - O NIF é obrigatório, mas **a validação formal do NIF português está desativada nesta fase**. O sistema apenas normaliza o valor e impede duplicados.
 - Email obrigatório e protegido contra duplicação.
+- Telemóvel obrigatório, com seleção de país/indicativo internacional.
 - Proteção contra duplo envio do formulário de registo.
 - Confirmação de email através do Supabase Auth.
 - Login e logout.
@@ -52,6 +62,15 @@ Catálogo B2B privado da CONSULDOCE, publicado como aplicação estática no Clo
 - Importação separada dos ficheiros Excel do Sage para catálogo/listagem de artigos e inventário/existências.
 - Carregamento e gestão de imagens dos produtos através do Supabase Storage.
 - Consulta de encomendas e dados dos clientes no backoffice.
+
+### Dados do cliente
+- `phone_country_code` guarda o indicativo internacional (ex. `+351`).
+- `phone_number` guarda o número de telemóvel sem o indicativo.
+- `address_line1` guarda o endereço principal.
+- `address_line2` guarda andar/lote/fração/porta ou complemento.
+- `postal_code` e `postal_locality` guardam código postal e localidade.
+- `country` guarda o país selecionado.
+- A coluna legada `address` continua preenchida para compatibilidade com código e relatórios existentes.
 
 ### Encomendas e email
 - O servidor valida novamente que cada produto está ativo e marcado como `in_stock` antes de aceitar a encomenda.
@@ -211,3 +230,9 @@ O catálogo carrega os produtos através de `get_catalog_products(false)` e apli
 ## v17 — responsive backoffice
 
 A interface de administração foi otimizada para iPhone/iOS e Android: navegação interna sem cortes, painéis dimensionados ao ecrã, filtros responsivos e tabelas com scroll horizontal táctil quando a quantidade de colunas não permite uma redução segura.
+
+## Migração v18 numa base existente
+
+Para uma base Supabase já em produção, não é necessário substituir o schema inteiro. Aplicar a migration externa `migration_client_contact_address_v18.sql`, que acrescenta os campos de contacto/morada, migra a morada antiga para `address_line1` e atualiza o trigger de criação de perfil. A migration não apaga clientes, produtos ou encomendas.
+
+Para uma instalação nova, usar apenas o `supabase_schema.sql` que acompanha esta versão. As migrations de atualização são mantidas fora do ZIP de distribuição consolidado.

@@ -1,7 +1,18 @@
-# CONSULDOCE — Catálogo B2B v23
+# CONSULDOCE — Catálogo B2B v24
 
 Versão consolidada com layout responsivo reforçado para iPhone/iOS e Android, mantendo o catálogo B2B, administração, encomendas, stock, PWA, autenticação e integração Supabase/Resend. A v18 acrescenta contacto telefónico estruturado e morada completa no registo de cliente. A v19 acrescenta uma área autenticada de edição dos dados do cliente. A v20 acrescenta múltiplas moradas de entrega. A v21 melhora o seletor de telemóvel para ecrãs móveis e garante que o email de encomenda inclui todos os dados do cliente e as moradas cadastradas. A v23 corrige a largura do campo de telemóvel no registo e na área de cliente, colocando o bloco numa linha própria para garantir espaço suficiente para pelo menos 9 dígitos em ecrãs móveis.
 
+
+### Alterações v24
+- Fluxo de recuperação de palavra-passe separado do login e do catálogo.
+- O email de recuperação aponta sempre para `/recovery`.
+- A rota `/recovery` é reconhecida mesmo quando aberta como `.../recovery?1`.
+- O token de recuperação nunca é tratado como uma sessão normal de cliente: apresenta exclusivamente o formulário para definir a nova palavra-passe.
+- A recuperação pede apenas nova palavra-passe e confirmação; não pede a palavra-passe antiga.
+- Depois de alterar a palavra-passe, a sessão de recuperação é terminada e o cliente regressa ao login.
+- Uma sessão de recuperação não permite entrar automaticamente no catálogo.
+- Para o Supabase Auth, o URL `https://consuldoce.pages.dev/recovery` deve estar incluído nos Redirect URLs permitidos.
+- Não é necessária migration SQL para esta correção.
 
 ### Alterações v23
 - Campo de telemóvel colocado numa linha própria no registo e na área de cliente.

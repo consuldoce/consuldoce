@@ -1,3 +1,6 @@
+## Atualização
+- Validação NIF corrigida e cache-busting do `app.js` para garantir que o Cloudflare serve a versão nova.
+
 # CONSULDOCE · Catálogo B2B vivo
 
 Site estático pronto para **Cloudflare Pages + GitHub**, com backend **Supabase**. O objetivo é disponibilizar aos clientes da Consuldoce um catálogo privado, sem preços, onde escolhem quantidades e submetem encomendas.

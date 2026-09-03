@@ -32,7 +32,7 @@ begin
   new.email := lower(trim(coalesce(new.email,'')));
   new.nif := regexp_replace(coalesce(new.nif,''),'\D','','g');
 
-  if new.role = 'client' then
+  if new.role = 'client' and new.nif <> '' then
     if not public.is_valid_portuguese_nif(new.nif) then
       raise exception 'NIF inválido';
     end if;

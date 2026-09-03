@@ -80,7 +80,9 @@ grant select on public.catalog_products to authenticated;
 -- the products table/view directly. It deliberately exposes no price and no
 -- physical stock quantity. SECURITY DEFINER lets it read the protected products
 -- table while returning only the approved customer-facing columns.
-create or replace function public.get_catalog_products()
+drop function if exists public.get_catalog_products();
+
+create or replace function public.get_catalog_products(p_only_in_stock boolean default false)
 returns table (
   id uuid,
   sku text,
@@ -106,6 +108,7 @@ as $$
          p.created_at, p.updated_at
   from public.products p
   where p.active = true
+    and (coalesce(p_only_in_stock, false) = false or p.in_stock is true)
   order by p.sort_order, p.name, p.sku;
 $$;
 

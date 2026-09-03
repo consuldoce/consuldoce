@@ -189,3 +189,8 @@ O ZIP de produção continua a conter apenas `supabase_schema.sql` como ficheiro
 - Os controlos da aplicação usam delegação de eventos JavaScript, sem `onclick`/`onchange` inline, mantendo a CSP sem `unsafe-inline` para scripts.
 - A pesquisa do catálogo e da administração reage também à introdução de texto (`input`), além de alterações de select/checkbox.
 - O schema consolidado continua em `supabase_schema.sql` na raiz; não executar esse ficheiro sobre uma base de produção existente sem primeiro aplicar a migration compatível.
+
+
+## v15 — filtro Em stock
+
+O catálogo carrega os produtos através de `get_catalog_products(false)` e aplica um filtro estrito sobre o campo administrativo `products.in_stock`. Quando **Apenas em stock** está ativo (estado inicial), apenas produtos cujo `in_stock` é verdadeiro podem ser apresentados e encomendados. A função SQL também suporta filtragem server-side através de `p_only_in_stock`, mantendo a regra no servidor.

@@ -1,0 +1,17 @@
+{
+  "name": "CONSULDOCE · Catálogo B2B",
+  "short_name": "CONSULDOCE",
+  "description": "Catálogo B2B privado da CONSULDOCE para consulta e envio de encomendas.",
+  "lang": "pt-PT",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "orientation": "portrait-primary",
+  "background_color": "#32163f",
+  "theme_color": "#32163f",
+  "icons": [
+    {"src":"icon-192.png","sizes":"192x192","type":"image/png","purpose":"any maskable"},
+    {"src":"icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}
+  ]
+}

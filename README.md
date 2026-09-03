@@ -232,3 +232,12 @@ Se também utilizar um domínio próprio, adicione a URL equivalente desse domí
 ### Validação NIF
 
 A validação aceita NIFs introduzidos com espaços (por exemplo `519 372 719`) ou apenas dígitos. O algoritmo usa módulo 11 e trata corretamente os casos em que o resultado é 10 ou 11, convertendo o dígito de controlo para 0. O NIF `519372719` passa a validação matemática.
+
+
+## PWA e instalação móvel
+
+A aplicação inclui `manifest.webmanifest`, service worker e ícones 180/192/512px. Em Android, navegadores compatíveis podem apresentar a opção de instalar a aplicação; em iPhone/iPad, abrir no Safari e usar **Partilhar → Adicionar ao ecrã principal**. A PWA é servida por HTTPS no Cloudflare Pages, requisito para service workers e instalação web.
+
+## Validação de NIF
+
+A validação do NIF português é feita no navegador para feedback imediato e repetida no PostgreSQL antes do registo. O exemplo `519372719` passa o cálculo de dígito de controlo. A validação não consulta a Autoridade Tributária para confirmar titularidade ou estado ativo.

@@ -246,3 +246,13 @@ A validação aceita NIFs introduzidos com espaços (por exemplo `519 372 719`) 
 O NIF é obrigatório no registo do cliente e é usado como identificador único.
 Nesta versão, o sistema **não valida o dígito de controlo nem a validade fiscal do NIF**.
 Apenas normaliza o valor e impede NIFs vazios e duplicados. A validação formal poderá ser reativada numa fase posterior.
+
+
+## Supabase Auth — URL de produção
+
+Para este deployment, configurar no Supabase Authentication → URL Configuration:
+
+- Site URL: `https://consuldoce.pages.dev/`
+- Redirect URL permitida: `https://consuldoce.pages.dev/**`
+
+O registo e a recuperação de palavra-passe passam explicitamente `emailRedirectTo`/`redirectTo` para o domínio atual, evitando o redirecionamento para a antiga aplicação `gestao-empresarial-gomas.pages.dev`.

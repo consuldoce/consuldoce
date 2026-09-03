@@ -289,3 +289,12 @@ No backoffice, o administrador pode filtrar por família, pesquisa ou referênci
 ## Ordenação e ID do produto
 
 O catálogo do cliente não apresenta ordenação por preço. A ordenação foi substituída por **ID do produto (SKU/referência)**. No backoffice, o ID do produto é uma coluna própria e existe um filtro dedicado, além da possibilidade de ordenar a listagem por ID. O UUID interno da base de dados continua a ser usado internamente e não é exposto ao cliente.
+
+
+## Administração de produtos — v10
+
+- A pesquisa é única e procura simultaneamente por ID/referência, nome, família, código de barras, descrição, stock e visibilidade.
+- O ID do produto (SKU/referência) aparece numa coluna própria.
+- Não existe um campo de pesquisa exclusivo para ID.
+- A ordenação permite ordenar por ID do produto, nome e família.
+- A ordem das colunas corresponde aos respetivos dados de cada linha.

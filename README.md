@@ -256,3 +256,8 @@ Para este deployment, configurar no Supabase Authentication → URL Configuratio
 - Redirect URL permitida: `https://consuldoce.pages.dev/**`
 
 O registo e a recuperação de palavra-passe passam explicitamente `emailRedirectTo`/`redirectTo` para o domínio atual, evitando o redirecionamento para a antiga aplicação `gestao-empresarial-gomas.pages.dev`.
+
+
+## Proteção contra submissão duplicada
+
+O formulário de registo bloqueia imediatamente o botão de criação de conta enquanto o pedido de `signUp` está em curso. Cliques repetidos não originam chamadas adicionais ao Supabase. Em caso de erro, o botão é reativado para permitir nova tentativa.

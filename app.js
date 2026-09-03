@@ -23,7 +23,93 @@ function isValidPortugueseNif(value){const nif=normalizeNif(value);if(nif.length
 function showForgotPassword(){state.authMode='forgot';render()}
 async function requestPasswordReset(e){e.preventDefault();const f=new FormData(e.target);const email=String(f.get('email')||'').trim().toLowerCase();const msg=document.getElementById('authMsg');msg.innerHTML='';try{const redirectTo=`${location.origin}${location.pathname}?recovery=1#/reset-password`;const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo});if(error)throw error;msg.innerHTML='<div class="notice success">Se o email estiver registado, receberá instruções para recuperar o acesso. Verifique também a pasta de spam.</div>'}catch(err){msg.innerHTML=`<div class="notice danger">${esc(err.message||'Não foi possível enviar o email de recuperação.')}</div>`}}
 async function updatePassword(e){e.preventDefault();const f=new FormData(e.target);const password=String(f.get('password')||''),confirm=String(f.get('password_confirm')||'');const msg=document.getElementById('authMsg');msg.innerHTML='';if(password.length<8){msg.innerHTML='<div class="notice danger">A palavra-passe deve ter pelo menos 8 caracteres.</div>';return}if(password!==confirm){msg.innerHTML='<div class="notice danger">As palavras-passe não coincidem.</div>';return}try{const {error}=await sb.auth.updateUser({password});if(error)throw error;state.authMode='login';await sb.auth.signOut();state.session=null;state.profile=null;setRoute('#/login');toast('Palavra-passe alterada. Já pode entrar com a nova palavra-passe.')}catch(err){msg.innerHTML=`<div class="notice danger">${esc(err.message||'Não foi possível alterar a palavra-passe.')}</div>`}}
-async function doAuth(e){e.preventDefault();if(!sb)return;const f=new FormData(e.target);const email=String(f.get('email')||'').trim().toLowerCase(),password=f.get('password');const msg=document.getElementById('authMsg');msg.innerHTML='';try{if(state.authMode==='forgot'){return await requestPasswordReset(e)}if(state.authMode==='recovery'){return await updatePassword(e)}if(state.authMode==='login'){const {error}=await sb.auth.signInWithPassword({email,password});if(error)throw error;toast('Sessão iniciada.')}else{const nif=normalizeNif(f.get('nif'));if(!nif){msg.innerHTML='<div class="notice danger">O NIF é obrigatório.</div>';return}const {data:availability,error:availabilityError}=await sb.rpc('check_registration',{p_email:email,p_nif:nif});if(!availabilityError&&availability){if(availability.email_exists){msg.innerHTML='<div class="notice danger">Já existe uma conta com este email. Use outro email ou recupere a palavra-passe da conta existente.</div>';return}if(availability.nif_exists){msg.innerHTML='<div class="notice danger">Já existe um cliente registado com este NIF. Não é possível criar um segundo registo.</div>';return}}const emailRedirectTo=`${location.origin}${location.pathname}`;const {data,error}=await sb.auth.signUp({email,password,options:{emailRedirectTo,data:{full_name:f.get('full_name'),nif,address:f.get('address')}}});if(error){const m=String(error.message||'');if(/duplicate|unique|already registered|already exists|profiles_nif/i.test(m))throw new Error('Já existe um cliente registado com este NIF ou email.');throw error}if(!data.session){msg.innerHTML='<div class="notice">Conta criada. Verifique o email se a confirmação estiver ativa no Supabase e depois entre.</div>'}else toast('Conta criada.')} }catch(err){msg.innerHTML=`<div class="notice danger">${esc(err.message||'Não foi possível concluir.')}</div>`}}
+let authSubmitInFlight=false;
+async function doAuth(e){
+  e.preventDefault();
+  if(!sb)return;
+  if(authSubmitInFlight)return;
+
+  const mode=state.authMode;
+  const submitter=e.submitter||e.target.querySelector('button[type="submit"]');
+  const originalText=submitter?.textContent||'';
+  const lock=mode==='register';
+
+  if(lock){
+    authSubmitInFlight=true;
+    if(submitter){
+      submitter.disabled=true;
+      submitter.setAttribute('aria-busy','true');
+      submitter.textContent='A criar conta...';
+    }
+  }
+
+  const f=new FormData(e.target);
+  const email=String(f.get('email')||'').trim().toLowerCase(),password=f.get('password');
+  const msg=document.getElementById('authMsg');
+  msg.innerHTML='';
+
+  try{
+    if(mode==='forgot'){return await requestPasswordReset(e)}
+    if(mode==='recovery'){return await updatePassword(e)}
+    if(mode==='login'){
+      const {error}=await sb.auth.signInWithPassword({email,password});
+      if(error)throw error;
+      toast('Sessão iniciada.');
+    }else{
+      const nif=normalizeNif(f.get('nif'));
+      if(!nif){
+        msg.innerHTML='<div class="notice danger">O NIF é obrigatório.</div>';
+        return;
+      }
+
+      const {data:availability,error:availabilityError}=await sb.rpc('check_registration',{p_email:email,p_nif:nif});
+      if(!availabilityError&&availability){
+        if(availability.email_exists){
+          msg.innerHTML='<div class="notice danger">Já existe uma conta com este email. Use outro email ou recupere a palavra-passe da conta existente.</div>';
+          return;
+        }
+        if(availability.nif_exists){
+          msg.innerHTML='<div class="notice danger">Já existe um cliente registado com este NIF. Não é possível criar um segundo registo.</div>';
+          return;
+        }
+      }
+
+      const emailRedirectTo=`${location.origin}${location.pathname}`;
+      const {data,error}=await sb.auth.signUp({
+        email,
+        password,
+        options:{
+          emailRedirectTo,
+          data:{full_name:f.get('full_name'),nif,address:f.get('address')}
+        }
+      });
+
+      if(error){
+        const m=String(error.message||'');
+        if(/duplicate|unique|already registered|already exists|profiles_nif/i.test(m))
+          throw new Error('Já existe um cliente registado com este NIF ou email.');
+        throw error;
+      }
+
+      if(!data.session){
+        msg.innerHTML='<div class="notice">Conta criada. Verifique o email se a confirmação estiver ativa no Supabase e depois entre.</div>';
+      }else{
+        toast('Conta criada.');
+      }
+    }
+  }catch(err){
+    msg.innerHTML=`<div class="notice danger">${esc(err.message||'Não foi possível concluir.')}</div>`;
+  }finally{
+    if(lock){
+      authSubmitInFlight=false;
+      if(submitter){
+        submitter.disabled=false;
+        submitter.removeAttribute('aria-busy');
+        submitter.textContent=originalText;
+      }
+    }
+  }
+}
 async function logout(){await sb?.auth.signOut();state.session=null;state.profile=null;setRoute('#/login')}
 
 async function loadSession(){if(!sb){state.route='#/login';return}const applySession=async(event,s)=>{state.session=s;if(event==='PASSWORD_RECOVERY'||new URLSearchParams(location.search).get('recovery')==='1'){if(s){state.authMode='recovery';state.route='#/reset-password';render();return}}if(s){await loadProfile();if(state.authMode==='recovery')return;if(state.route==='#/login'||state.route==='#/reset-password')state.route='#/catalog'}else{state.profile=null;if(state.authMode!=='recovery')state.route='#/login'}render()};sb.auth.onAuthStateChange((event,s)=>{setTimeout(()=>applySession(event,s),0)});const {data}=await sb.auth.getSession();await applySession('INITIAL_SESSION',data.session)}

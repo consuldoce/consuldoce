@@ -65,7 +65,7 @@ Cloudflare Pages continua a servir o site e GitHub continua a ser o repositório
 
 ## Instalação — Supabase
 
-1. Crie um projeto gratuito em Supabase.
+1. O projeto Supabase configurado para esta versão é `https://lepiuwvmcwxamkqpeill.supabase.co` (project ref: `lepiuwvmcwxamkqpeill`).
 2. Abra **SQL Editor**.
 3. Execute o conteúdo de `supabase/schema.sql`.
 4. Em **Authentication → Providers → Email**, configure a política de confirmação de email que pretende. Para um portal B2B fechado pode preferir confirmação de email ativa.
@@ -78,15 +78,8 @@ set role = 'admin'
 where email = 'SEU_EMAIL_ADMIN';
 ```
 
-7. Em **Project Settings → API**, copie o **Project URL** e a **anon/public key**.
-8. Copie `config.example.js` para `config.js` e preencha:
-
-```js
-window.CONSULDOCE_CONFIG = {
-  SUPABASE_URL: 'https://SEU-PROJETO.supabase.co',
-  SUPABASE_ANON_KEY: 'SUA_ANON_KEY_PUBLICA'
-};
-```
+7. Em **Project Settings → API**, confirme o **Project URL** e a chave pública configurados em `config.js`.
+8. O ZIP já inclui `config.js` preenchido com esses valores. Se criares outro projeto, substitui-os pelos valores do novo projeto.
 
 ### Regra importante de segurança
 
@@ -100,7 +93,7 @@ Instale a Supabase CLI no seu computador e faça login, depois associe o projeto
 
 ```bash
 supabase login
-supabase link --project-ref SEU_PROJECT_REF
+supabase link --project-ref lepiuwvmcwxamkqpeill
 supabase functions deploy send-order-email
 ```
 

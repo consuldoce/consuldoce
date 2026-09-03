@@ -1,6 +1,6 @@
-# CONSULDOCE — Catálogo B2B v19
+# CONSULDOCE — Catálogo B2B v21
 
-Versão consolidada com layout responsivo reforçado para iPhone/iOS e Android, mantendo o catálogo B2B, administração, encomendas, stock, PWA, autenticação e integração Supabase/Resend. A v18 acrescenta contacto telefónico estruturado e morada completa no registo de cliente. A v19 acrescenta uma área autenticada de edição dos dados do cliente.
+Versão consolidada com layout responsivo reforçado para iPhone/iOS e Android, mantendo o catálogo B2B, administração, encomendas, stock, PWA, autenticação e integração Supabase/Resend. A v18 acrescenta contacto telefónico estruturado e morada completa no registo de cliente. A v19 acrescenta uma área autenticada de edição dos dados do cliente. A v20 acrescenta múltiplas moradas de entrega. A v21 melhora o seletor de telemóvel para ecrãs móveis e garante que o email de encomenda inclui todos os dados do cliente e as moradas cadastradas.
 
 ### Alterações v18
 - Registo de cliente com número de telemóvel obrigatório.
@@ -274,3 +274,13 @@ A migration:
 - mantém os dados existentes e não apaga produtos, clientes ou encomendas.
 
 O ZIP consolidado continua a ter **um único `supabase_schema.sql` canónico na raiz**. A migration v20 é fornecida separadamente apenas para atualizar a instalação já existente.
+
+
+## v21 — telemóvel e email completo de encomenda
+- O seletor de país do telemóvel apresenta apenas **bandeira + indicativo**, por exemplo `🇵🇹 (+351)`, deixando mais largura para o número em iPhone e Android.
+- O indicativo continua guardado no campo `profiles.phone_country_code` e o número em `profiles.phone_number`.
+- O email de cada encomenda inclui nome/empresa, NIF, email, telemóvel, morada atualmente registada, morada efetivamente escolhida para entrega e as moradas existentes no cadastro.
+- A morada histórica da encomenda continua a ser usada para preservar o endereço escolhido no momento da compra.
+- Cache do PWA atualizada para forçar a entrada da versão v21 após deploy.
+
+Não é necessária uma nova migration SQL para a v21: não foram introduzidas novas colunas ou tabelas.

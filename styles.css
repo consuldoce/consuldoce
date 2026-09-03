@@ -79,14 +79,15 @@
 }
 
 /* v18 — structured customer contact and address fields */
-.phone-field{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:8px}
-.phone-prefix{min-width:0}
-.phone-number{min-width:0}
+.phone-field{display:grid;grid-template-columns:108px minmax(0,1fr);gap:8px;width:100%}
+.phone-prefix{min-width:0;width:100%;padding-left:8px;padding-right:8px}
+.phone-number{min-width:0;width:100%}
 @media(max-width:500px){
   .auth-shell{padding:14px 10px;place-items:start center}
   .auth-card{padding:22px 18px;border-radius:20px;margin:10px 0;width:100%;max-width:520px}
-  .phone-field{grid-template-columns:1fr 1fr}
-  .phone-prefix{font-size:12px;padding-left:8px;padding-right:8px}
+  .phone-field{grid-template-columns:98px minmax(0,1fr)}
+  .phone-prefix{font-size:12px;padding-left:7px;padding-right:7px;overflow:hidden}
+  .phone-number{font-size:16px}
 }
 
 

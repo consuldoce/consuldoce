@@ -1,7 +1,13 @@
-# CONSULDOCE — Catálogo B2B v25
+# CONSULDOCE — Catálogo B2B v27
 
 Versão consolidada com layout responsivo reforçado para iPhone/iOS e Android, mantendo o catálogo B2B, administração, encomendas, stock, PWA, autenticação e integração Supabase/Resend. A v18 acrescenta contacto telefónico estruturado e morada completa no registo de cliente. A v19 acrescenta uma área autenticada de edição dos dados do cliente. A v20 acrescenta múltiplas moradas de entrega. A v21 melhora o seletor de telemóvel para ecrãs móveis e garante que o email de encomenda inclui todos os dados do cliente e as moradas cadastradas. A v23 corrige a largura do campo de telemóvel no registo e na área de cliente, colocando o bloco numa linha própria para garantir espaço suficiente para pelo menos 9 dígitos em ecrãs móveis.
 
+
+### Alterações v27
+- Arranque da aplicação tornado mais robusto para evitar ecrãs totalmente brancos quando o Supabase demora a responder ou ocorre um erro durante o render.
+- Erros de renderização passam a ser apresentados ao utilizador em vez de deixar a página vazia.
+- Cache do Service Worker e versões dos assets atualizadas para impedir que uma versão anterior do JavaScript fique presa após o deploy.
+- Mantida a funcionalidade de progresso percentual das operações de administração e carregamento de fotografias em lote.
 
 ### Alterações v25
 - Fluxo de recuperação de palavra-passe separado do login e do catálogo.
@@ -314,3 +320,8 @@ O pedido de recuperação usa um `redirectTo` explícito para a mesma origem com
 - Atualizações em lote de stock e publicação/ocultação apresentam progresso e estado de conclusão/erro.
 - Importações de artigos e stock apresentam percentagem de processamento e detalhe da operação.
 - O seletor de fotografias é reiniciado após cada operação para permitir selecionar novamente os mesmos ficheiros.
+
+
+## Arranque robusto v27
+
+A inicialização do cliente Supabase é feita de forma protegida, evitando que uma falha na criação do cliente deixe a aplicação num ecrã branco. O versionamento de cache do Service Worker também foi incrementado para v27.

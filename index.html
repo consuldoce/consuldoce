@@ -14,8 +14,10 @@
 <body>
   <div id="app"></div>
   <div id="toast" class="toast" aria-live="polite"></div>
+  <div id="fatalError" style="display:none;max-width:760px;margin:48px auto;padding:24px;border:1px solid #ead7e8;border-radius:16px;background:#fff;font-family:Inter,Arial,sans-serif;color:#32163f"><h2 style="margin:0 0 8px">Não foi possível carregar o catálogo</h2><p id="fatalErrorText" style="margin:0;color:#5f5265">Recarregue a página. Se o problema persistir, envie esta mensagem à administração.</p></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
+  <script>window.addEventListener("error", function(e){var el=document.getElementById("fatalError"), t=document.getElementById("fatalErrorText"); if(el&&t){t.textContent="Erro de carregamento: "+(e.error&&e.error.message?e.error.message:(e.message||"erro desconhecido")); el.style.display="block";}}); window.addEventListener("unhandledrejection", function(e){var el=document.getElementById("fatalError"), t=document.getElementById("fatalErrorText"); if(el&&t){t.textContent="Erro de carregamento: "+(e.reason&&e.reason.message?e.reason.message:String(e.reason)); el.style.display="block";}});</script>
   <script type="module" src="app.js"></script>
 </body>
 </html>

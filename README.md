@@ -1,7 +1,13 @@
-# CONSULDOCE — Catálogo B2B v27
+# CONSULDOCE — Catálogo B2B v30
 
 Versão consolidada com layout responsivo reforçado para iPhone/iOS e Android, mantendo o catálogo B2B, administração, encomendas, stock, PWA, autenticação e integração Supabase/Resend. A v18 acrescenta contacto telefónico estruturado e morada completa no registo de cliente. A v19 acrescenta uma área autenticada de edição dos dados do cliente. A v20 acrescenta múltiplas moradas de entrega. A v21 melhora o seletor de telemóvel para ecrãs móveis e garante que o email de encomenda inclui todos os dados do cliente e as moradas cadastradas. A v23 corrige a largura do campo de telemóvel no registo e na área de cliente, colocando o bloco numa linha própria para garantir espaço suficiente para pelo menos 9 dígitos em ecrãs móveis.
 
+
+### Alterações v30
+- Área de imagem dos cartões do catálogo aumentada para permitir visualizar produtos com imagens maiores ou mais altas sem cortar a imagem.
+- No backoffice, clicar na miniatura da imagem de um produto abre uma pré-visualização ampliada em popup.
+- Mantida a seleção e eliminação em massa das imagens dos produtos.
+- Cache do Service Worker atualizada.
 
 ### Alterações v27
 - Arranque da aplicação tornado mais robusto para evitar ecrãs totalmente brancos quando o Supabase demora a responder ou ocorre um erro durante o render.
@@ -305,7 +311,8 @@ O ZIP consolidado continua a ter **um único `supabase_schema.sql` canónico na 
 - O indicativo continua guardado no campo `profiles.phone_country_code` e o número em `profiles.phone_number`.
 - O email de cada encomenda inclui nome/empresa, NIF, email, telemóvel, morada atualmente registada, morada efetivamente escolhida para entrega e as moradas existentes no cadastro.
 - A morada histórica da encomenda continua a ser usada para preservar o endereço escolhido no momento da compra.
-- Cache do PWA atualizada para forçar a entrada da versão V28 após deploy.
+- Cache do PWA atualizada para forçar a entrada da versão V29 após deploy.
+- Backoffice: botão **Selecionar com imagem** seleciona automaticamente todos os produtos que têm imagem e **Apagar imagens selecionadas** remove apenas as imagens dos produtos selecionados, com confirmação e progresso.
 
 Não é necessária uma nova migration SQL para a v21: não foram introduzidas novas colunas ou tabelas.
 

@@ -107,3 +107,23 @@
 .operation-progress-bar{height:100%;width:0;background:var(--gold);border-radius:999px;transition:width .18s ease}
 .operation-progress-detail{font-size:11px;color:var(--muted);margin-top:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 @media(max-width:500px){.operation-progress{bottom:12px}.operation-progress-card{padding:12px}.operation-progress-head{font-size:12px}}
+
+/* V30 — catálogo com área de imagem maior e pré-visualização no backoffice */
+.product-image{height:280px;padding:10px}
+.product-image img{object-fit:contain}
+.image-thumb-button{border:0;padding:0;width:52px;height:52px;border-radius:10px;background:#f6f1f7;display:grid;place-items:center;cursor:zoom-in}
+.admin-image-thumb{width:52px;height:52px;object-fit:contain;border-radius:10px;display:block}
+.image-thumb-button:hover{box-shadow:0 0 0 2px var(--purple-3)}
+.image-preview-modal{z-index:80}
+.image-preview-card{background:#fff;border-radius:22px;width:min(1000px,96vw);max-height:94vh;box-shadow:var(--shadow);overflow:hidden}
+.image-preview-body{padding:22px;display:flex;align-items:center;justify-content:center;min-height:320px;max-height:calc(94vh - 105px);background:#f8f4f8}
+.image-preview-body img{display:block;max-width:100%;max-height:calc(94vh - 155px);width:auto;height:auto;object-fit:contain}
+@media(max-width:780px){
+  .product-image{height:300px;padding:12px}
+  .image-preview-card{width:96vw}
+  .image-preview-body{padding:12px;min-height:240px}
+  .image-preview-body img{max-height:calc(94vh - 145px)}
+}
+@media(max-width:500px){
+  .product-image{height:320px}
+}

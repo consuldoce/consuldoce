@@ -123,30 +123,6 @@ revoke execute on function public.get_catalog_products() from public;
 grant execute on function public.get_catalog_products() to authenticated;
 
 -- -----------------------------------------------------------------------------
--- Orders
--- -----------------------------------------------------------------------------
-create table if not exists public.orders (
-  id uuid primary key default gen_random_uuid(),
-  client_id uuid not null references public.profiles(id) on delete restrict,
-  status public.order_status not null default 'new',
-  notes text,
-  created_at timestamptz not null default now()
-);
-
-create table if not exists public.order_items (
-  id uuid primary key default gen_random_uuid(),
-  order_id uuid not null references public.orders(id) on delete cascade,
-  product_id uuid references public.products(id) on delete set null,
-  sku text not null,
-  product_name text not null,
-  quantity integer not null check (quantity > 0),
-  created_at timestamptz not null default now()
-);
-
-create index if not exists orders_client_created_idx on public.orders(client_id, created_at desc);
-create index if not exists order_items_order_idx on public.order_items(order_id);
-
--- -----------------------------------------------------------------------------
 -- Common functions / triggers
 -- -----------------------------------------------------------------------------
 create or replace function public.touch_updated_at()
@@ -176,6 +152,148 @@ as $$
     where p.id = auth.uid() and p.role = 'admin'
   );
 $$;
+
+-- -----------------------------------------------------------------------------
+-- Customer addresses
+-- A client may have multiple delivery addresses, with exactly one preferred
+-- address whenever at least one address exists. Orders store a snapshot so
+-- changing a saved address later never changes historical orders.
+-- -----------------------------------------------------------------------------
+create table if not exists public.customer_addresses (
+  id uuid primary key default gen_random_uuid(),
+  client_id uuid not null references public.profiles(id) on delete cascade,
+  label text not null default 'Morada',
+  address_line1 text not null default '',
+  address_line2 text not null default '',
+  postal_code text not null default '',
+  postal_locality text not null default '',
+  country text not null default 'Portugal',
+  is_default boolean not null default false,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create index if not exists customer_addresses_client_idx on public.customer_addresses(client_id, created_at);
+create unique index if not exists customer_addresses_one_default_idx on public.customer_addresses(client_id) where is_default = true;
+
+create or replace function public.customer_addresses_default_guard()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if tg_op = 'INSERT' then
+    if new.is_default or not exists(select 1 from public.customer_addresses where client_id=new.client_id) then
+      update public.customer_addresses set is_default=false where client_id=new.client_id;
+      new.is_default := true;
+    end if;
+  elsif tg_op = 'UPDATE' then
+    if new.is_default then
+      update public.customer_addresses set is_default=false where client_id=new.client_id and id<>new.id;
+    elsif old.is_default and new.client_id=old.client_id then
+      new.is_default := true;
+    end if;
+  end if;
+  new.updated_at := now();
+  return new;
+end;
+$$;
+drop trigger if exists customer_addresses_default_guard on public.customer_addresses;
+create trigger customer_addresses_default_guard
+before insert or update on public.customer_addresses
+for each row execute function public.customer_addresses_default_guard();
+
+create or replace function public.customer_addresses_before_delete()
+returns trigger language plpgsql security definer set search_path=public as $$
+begin
+  if old.is_default and not exists(select 1 from public.customer_addresses where client_id=old.client_id and id<>old.id) then
+    raise exception 'A conta tem de ter uma morada predefinida.';
+  end if;
+  return old;
+end; $$;
+drop trigger if exists customer_addresses_before_delete on public.customer_addresses;
+create trigger customer_addresses_before_delete before delete on public.customer_addresses for each row execute function public.customer_addresses_before_delete();
+
+create or replace function public.customer_addresses_after_delete()
+returns trigger language plpgsql security definer set search_path=public as $$
+begin
+  if old.is_default then
+    update public.customer_addresses set is_default=true where id=(select id from public.customer_addresses where client_id=old.client_id order by created_at,id limit 1);
+  end if;
+  return old;
+end; $$;
+drop trigger if exists customer_addresses_after_delete on public.customer_addresses;
+create trigger customer_addresses_after_delete after delete on public.customer_addresses for each row execute function public.customer_addresses_after_delete();
+
+drop trigger if exists customer_addresses_touch on public.customer_addresses;
+create trigger customer_addresses_touch before update on public.customer_addresses for each row execute function public.touch_updated_at();
+
+alter table public.customer_addresses enable row level security;
+drop policy if exists customer_addresses_select on public.customer_addresses;
+create policy customer_addresses_select on public.customer_addresses for select to authenticated using (client_id=auth.uid() or public.is_admin());
+drop policy if exists customer_addresses_insert on public.customer_addresses;
+create policy customer_addresses_insert on public.customer_addresses for insert to authenticated with check (client_id=auth.uid() or public.is_admin());
+drop policy if exists customer_addresses_update on public.customer_addresses;
+create policy customer_addresses_update on public.customer_addresses for update to authenticated using (client_id=auth.uid() or public.is_admin()) with check (client_id=auth.uid() or public.is_admin());
+drop policy if exists customer_addresses_delete on public.customer_addresses;
+create policy customer_addresses_delete on public.customer_addresses for delete to authenticated using (client_id=auth.uid() or public.is_admin());
+
+create or replace function public.set_default_customer_address(p_address_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare v_client uuid;
+begin
+  select client_id into v_client from public.customer_addresses where id=p_address_id;
+  if v_client is null or (v_client<>auth.uid() and not public.is_admin()) then raise exception 'Morada não encontrada'; end if;
+  update public.customer_addresses set is_default=false where client_id=v_client;
+  update public.customer_addresses set is_default=true where id=p_address_id;
+end;
+$$;
+grant execute on function public.set_default_customer_address(uuid) to authenticated;
+
+-- Backfill the current profile address into the address book. Safe to run more than once.
+insert into public.customer_addresses(client_id,label,address_line1,address_line2,postal_code,postal_locality,country,is_default)
+select p.id,'Principal',p.address_line1,p.address_line2,p.postal_code,p.postal_locality,p.country,true
+from public.profiles p
+where not exists(select 1 from public.customer_addresses a where a.client_id=p.id)
+  and (coalesce(p.address_line1,'')<>'' or coalesce(p.address_line2,'')<>'' or coalesce(p.postal_code,'')<>'' or coalesce(p.postal_locality,'')<>'');
+
+
+-- -----------------------------------------------------------------------------
+-- Orders
+-- -----------------------------------------------------------------------------
+create table if not exists public.orders (
+  id uuid primary key default gen_random_uuid(),
+  client_id uuid not null references public.profiles(id) on delete restrict,
+  status public.order_status not null default 'new',
+  notes text,
+  delivery_address_id uuid references public.customer_addresses(id) on delete set null,
+  delivery_address_label text not null default '',
+  delivery_address_line1 text not null default '',
+  delivery_address_line2 text not null default '',
+  delivery_postal_code text not null default '',
+  delivery_postal_locality text not null default '',
+  delivery_country text not null default 'Portugal',
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.order_items (
+  id uuid primary key default gen_random_uuid(),
+  order_id uuid not null references public.orders(id) on delete cascade,
+  product_id uuid references public.products(id) on delete set null,
+  sku text not null,
+  product_name text not null,
+  quantity integer not null check (quantity > 0),
+  created_at timestamptz not null default now()
+);
+
+create index if not exists orders_client_created_idx on public.orders(client_id, created_at desc);
+create index if not exists order_items_order_idx on public.order_items(order_id);
+
+
 
 -- Creates the application profile when Supabase Auth creates a user.
 create or replace function public.handle_new_user()
@@ -224,6 +342,17 @@ begin
     postal_code = excluded.postal_code,
     postal_locality = excluded.postal_locality,
     country = excluded.country;
+
+  insert into public.customer_addresses(client_id,label,address_line1,address_line2,postal_code,postal_locality,country,is_default)
+  select new.id,'Principal',
+    trim(coalesce(new.raw_user_meta_data->>'address_line1','')),
+    trim(coalesce(new.raw_user_meta_data->>'address_line2','')),
+    trim(coalesce(new.raw_user_meta_data->>'postal_code','')),
+    trim(coalesce(new.raw_user_meta_data->>'postal_locality','')),
+    coalesce(nullif(trim(new.raw_user_meta_data->>'country'),''),'Portugal'),
+    true
+  where not exists(select 1 from public.customer_addresses a where a.client_id=new.id);
+
   return new;
 end;
 $$;
@@ -362,7 +491,7 @@ using (
 -- Availability is controlled by admin through products.in_stock.
 -- Physical stock is informational and is not decremented automatically.
 -- -----------------------------------------------------------------------------
-create or replace function public.create_order(p_items jsonb, p_notes text default null)
+create or replace function public.create_order(p_items jsonb, p_notes text default null, p_address_id uuid default null)
 returns uuid
 language plpgsql
 security definer
@@ -374,46 +503,35 @@ declare
   v_product public.products%rowtype;
   v_qty integer;
   v_product_id uuid;
+  v_address public.customer_addresses%rowtype;
 begin
   if auth.uid() is null then raise exception 'Não autenticado'; end if;
-  if jsonb_typeof(p_items) <> 'array' or jsonb_array_length(p_items) = 0 then
-    raise exception 'Carrinho vazio';
-  end if;
-  if not exists(select 1 from public.profiles where id = auth.uid() and role in ('client','admin')) then
-    raise exception 'Perfil inválido';
-  end if;
+  if jsonb_typeof(p_items) <> 'array' or jsonb_array_length(p_items) = 0 then raise exception 'Carrinho vazio'; end if;
+  if not exists(select 1 from public.profiles where id=auth.uid() and role in ('client','admin')) then raise exception 'Perfil inválido'; end if;
+  if p_address_id is null then raise exception 'Selecione uma morada de entrega'; end if;
+  select * into v_address from public.customer_addresses where id=p_address_id and client_id=auth.uid();
+  if not found then raise exception 'Morada de entrega inválida'; end if;
 
-  insert into public.orders(client_id, notes)
-  values (auth.uid(), nullif(left(coalesce(p_notes,''),1000),''))
+  insert into public.orders(client_id, notes, delivery_address_id, delivery_address_label, delivery_address_line1, delivery_address_line2, delivery_postal_code, delivery_postal_locality, delivery_country)
+  values (auth.uid(), nullif(left(coalesce(p_notes,''),1000),''), v_address.id, v_address.label, v_address.address_line1, v_address.address_line2, v_address.postal_code, v_address.postal_locality, v_address.country)
   returning id into v_order_id;
 
   for v_item in select * from jsonb_array_elements(p_items) loop
     begin
       v_product_id := (v_item->>'product_id')::uuid;
       v_qty := (v_item->>'quantity')::integer;
-    exception when others then
-      raise exception 'Item de encomenda inválido';
-    end;
-
+    exception when others then raise exception 'Item de encomenda inválido'; end;
     if v_qty is null or v_qty <= 0 then raise exception 'Quantidade inválida'; end if;
-
-    select * into v_product
-    from public.products
-    where id = v_product_id and active = true
-    for update;
-
+    select * into v_product from public.products where id=v_product_id and active=true for update;
     if not found then raise exception 'Produto indisponível'; end if;
-    if not v_product.in_stock then raise exception 'Produto fora de stock: %', v_product.name; end if;
-
-    insert into public.order_items(order_id, product_id, sku, product_name, quantity)
-    values (v_order_id, v_product.id, v_product.sku, v_product.name, v_qty);
+    if not v_product.in_stock then raise exception 'Produto fora de stock: %',v_product.name; end if;
+    insert into public.order_items(order_id,product_id,sku,product_name,quantity) values(v_order_id,v_product.id,v_product.sku,v_product.name,v_qty);
   end loop;
-
   return v_order_id;
 end;
 $$;
+grant execute on function public.create_order(jsonb,text,uuid) to authenticated;
 
-grant execute on function public.create_order(jsonb,text) to authenticated;
 
 -- -----------------------------------------------------------------------------
 -- Product image storage

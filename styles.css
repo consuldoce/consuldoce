@@ -88,3 +88,11 @@
   .phone-field{grid-template-columns:1fr 1fr}
   .phone-prefix{font-size:12px;padding-left:8px;padding-right:8px}
 }
+
+
+/* v20 — multiple customer delivery addresses */
+.account-section-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;margin-bottom:16px}
+.address-card{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;border:1px solid #eadfec;border-radius:14px;padding:14px;margin-top:10px;background:#fff}
+.address-card.default{border-color:#d8c4df}
+.address-title{font-weight:700;margin-bottom:5px}.address-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+@media(max-width:600px){.account-section-head{flex-direction:column}.address-card{flex-direction:column}.address-actions{justify-content:flex-start;width:100%}.address-actions .btn{flex:1 1 auto}}

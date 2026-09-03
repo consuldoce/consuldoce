@@ -243,3 +243,34 @@ Para uma instalação nova, usar apenas o `supabase_schema.sql` que acompanha es
 A aplicação inclui uma secção autenticada **Minha conta** onde o cliente pode consultar e alterar os seus dados de empresa/contacto: nome, NIF, telemóvel com país/indicativo, endereço em duas linhas, código postal, localidade, país e email. Inclui também alteração de palavra-passe.
 
 As alterações de NIF e email continuam protegidas pelas regras de unicidade da base de dados; a validação formal do NIF português permanece desativada por decisão funcional atual. Alterações de email através do Supabase Auth podem exigir confirmação no novo endereço.
+
+## v20 — múltiplas moradas de entrega
+
+A área **Minha conta** suporta agora várias moradas de entrega por cliente. Cada morada tem um nome identificativo (por exemplo, Sede, Armazém ou Loja), endereço principal, complemento, código postal, localidade e país.
+
+Regras funcionais:
+
+- O cliente pode adicionar, editar e eliminar moradas.
+- Existe sempre uma **morada predefinida** quando o cliente tem pelo menos uma morada.
+- Ao adicionar a primeira morada, esta fica automaticamente predefinida.
+- O cliente pode mudar a morada predefinida a qualquer momento.
+- A última morada predefinida não pode ser eliminada sem existir outra morada disponível.
+- Ao iniciar uma encomenda, a morada predefinida é selecionada automaticamente.
+- Antes de enviar a encomenda, o cliente pode escolher qualquer outra morada do seu cadastro.
+- A encomenda guarda uma **cópia da morada escolhida**. Assim, alterar uma morada no futuro não altera a morada que consta numa encomenda histórica.
+- O email interno da encomenda usa a morada de entrega efetivamente escolhida, e não simplesmente a morada atual do perfil.
+
+### Migração v20 numa base existente
+
+Para a instalação Supabase que já contém os dados atuais, executar uma única vez, no SQL Editor, o ficheiro externo `migration_customer_addresses_v20.sql`.
+
+A migration:
+
+- cria a tabela de moradas;
+- migra a morada atual dos clientes para uma morada `Principal` quando existe informação;
+- garante uma única morada predefinida por cliente;
+- acrescenta à encomenda os campos necessários para guardar o snapshot da morada de entrega;
+- atualiza a função segura `create_order` para validar que a morada pertence ao cliente autenticado;
+- mantém os dados existentes e não apaga produtos, clientes ou encomendas.
+
+O ZIP consolidado continua a ter **um único `supabase_schema.sql` canónico na raiz**. A migration v20 é fornecida separadamente apenas para atualizar a instalação já existente.

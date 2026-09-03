@@ -44,3 +44,36 @@
   .lead{font-size:15px;line-height:1.45}
   .product-image{height:200px}
 }
+
+/* v17 — responsive backoffice layout for iOS/Android */
+.admin-layout,.admin-layout>*{min-width:0}
+.table-wrap{width:100%;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+
+@media (max-width:780px){
+  .admin-layout{display:block;width:100%;}
+  .side{position:static;width:100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;padding:8px;margin-bottom:14px;overflow:visible;}
+  .side button{width:100%;min-width:0;text-align:center;white-space:normal;padding:12px 8px;line-height:1.2;}
+  .panel{width:100%;max-width:100%;padding:16px;border-radius:16px;overflow:hidden;}
+  .panel-title{font-size:18px;}
+  .toolbar{width:100%;max-width:100%;align-items:stretch;}
+  .toolbar .search,.toolbar .category,.toolbar .sort{width:100%;max-width:none;min-width:0;flex:1 1 100%;}
+  .table-wrap{margin:0;width:100%;max-width:100%;border-radius:10px;}
+  .table{min-width:680px;}
+  .table th,.table td{padding:10px 8px;}
+  .stats{grid-template-columns:1fr 1fr;}
+  .admin-import-tabs{display:grid;grid-template-columns:1fr 1fr;gap:4px;}
+  .admin-import-tabs .tab{min-width:0;line-height:1.2;}
+}
+
+@media (max-width:500px){
+  .page{width:100%;max-width:100%;padding:18px 12px 45px;}
+  .hero{margin:8px 0 18px;}
+  .admin-layout{width:100%;}
+  .side{grid-template-columns:1fr 1fr;}
+  .side button{font-size:13px;}
+  .panel{padding:14px;}
+  .panel .toolbar{padding:10px;}
+  .stats{grid-template-columns:1fr;}
+  .table{min-width:640px;}
+  .dropzone{padding:20px 12px;}
+}

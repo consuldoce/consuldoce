@@ -1,14 +1,14 @@
-# CONSULDOCE — Catálogo B2B v16
+# CONSULDOCE — Catálogo B2B v17
 
 Versão consolidada com layout responsivo reforçado para iPhone/iOS e Android, mantendo o catálogo B2B, administração, encomendas, stock, PWA, autenticação e integração Supabase/Resend.
 
-### Correção v16
+### Correção v17
 - Cabeçalho responsivo em ecrãs pequenos, sem sobreposição de logótipo e botões.
 - Ações do cabeçalho podem ocupar uma segunda linha e têm scroll horizontal seguro quando necessário.
 - Conteúdo, filtros, cartões, modais e carrinho limitados à largura do viewport.
 - Catálogo em uma coluna em telemóveis para leitura e interação mais confortável.
 - Mantida a política CSP sem `unsafe-inline`.
-- Cache do PWA atualizada para v16.
+- Cache do PWA atualizada para v17.
 
 # CONSULDOCE — Catálogo B2B
 
@@ -206,3 +206,8 @@ O ZIP de produção continua a conter apenas `supabase_schema.sql` como ficheiro
 ## v15 — filtro Em stock
 
 O catálogo carrega os produtos através de `get_catalog_products(false)` e aplica um filtro estrito sobre o campo administrativo `products.in_stock`. Quando **Apenas em stock** está ativo (estado inicial), apenas produtos cujo `in_stock` é verdadeiro podem ser apresentados e encomendados. A função SQL também suporta filtragem server-side através de `p_only_in_stock`, mantendo a regra no servidor.
+
+
+## v17 — responsive backoffice
+
+A interface de administração foi otimizada para iPhone/iOS e Android: navegação interna sem cortes, painéis dimensionados ao ecrã, filtros responsivos e tabelas com scroll horizontal táctil quando a quantidade de colunas não permite uma redução segura.

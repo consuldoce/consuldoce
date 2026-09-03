@@ -181,3 +181,11 @@ A versão atual usa `SUPABASE_PUBLISHABLE_KEY` no frontend, compatível com a ch
 Se a base de dados já estiver instalada e contiver os produtos atuais, **não é necessário apagar dados nem executar novamente o schema completo**. Para esta correção do carregamento do catálogo, executar uma única vez o ficheiro de migração fornecido separadamente: `migration_catalog_rpc.sql`.
 
 O ZIP de produção continua a conter apenas `supabase_schema.sql` como ficheiro SQL canónico na raiz; a migration é fornecida fora do ZIP apenas para facilitar a atualização de uma instalação já existente.
+
+## Atualização v14 — catálogo e ações
+
+- O filtro **Apenas em stock** vem ativo por defeito ao abrir o catálogo.
+- Foi removido o botão **Ver carrinho** da barra de filtros do catálogo; o carrinho continua disponível no cabeçalho e, quando aplicável, no fluxo de encomenda.
+- Os controlos da aplicação usam delegação de eventos JavaScript, sem `onclick`/`onchange` inline, mantendo a CSP sem `unsafe-inline` para scripts.
+- A pesquisa do catálogo e da administração reage também à introdução de texto (`input`), além de alterações de select/checkbox.
+- O schema consolidado continua em `supabase_schema.sql` na raiz; não executar esse ficheiro sobre uma base de produção existente sem primeiro aplicar a migration compatível.

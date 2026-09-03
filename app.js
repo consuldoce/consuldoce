@@ -235,6 +235,38 @@ async function bulkDeleteProductImages(){
 
 async function bulkSetProductsActive(active){const ids=[...(window.__selectedProducts||[])];const out=document.getElementById('bulkResult');if(!ids.length){if(out)out.textContent='Selecione pelo menos um produto.';return}showProgress(active?'A publicar produtos…':'A ocultar produtos…',0,`0 de ${ids.length} produtos`);try{const {error}=await sb.from('products').update({active}).in('id',ids);if(error)throw error;showProgress(active?'A publicar produtos…':'A ocultar produtos…',100,`${ids.length} de ${ids.length} produtos atualizados`);window.__selectedProducts.clear();await adminProducts(document.getElementById('adminContent'));toast(active?'Produtos publicados.':'Produtos ocultados.');setTimeout(hideProgress,500)}catch(err){if(out)out.innerHTML=`<div class="notice danger">${esc(err.message||'Não foi possível atualizar os produtos.')}</div>`;showProgress('Atualização interrompida',0,err.message||'Ocorreu um erro.');setTimeout(hideProgress,2200)}}
 function safeFileStem(name){return String(name||'').replace(/\.[^.]+$/,'').trim().toLowerCase()}
+async function prepareProductImage(file){
+  if(!file?.size) throw new Error('Ficheiro de imagem inválido.');
+  const TARGET_W=800, TARGET_H=1000, PADDING=28;
+  let source=null;
+  try{
+    if('createImageBitmap' in window) source=await createImageBitmap(file,{imageOrientation:'from-image'});
+  }catch(_){source=null}
+  if(!source){
+    source=await new Promise((resolve,reject)=>{
+      const url=URL.createObjectURL(file),img=new Image();
+      img.onload=()=>{URL.revokeObjectURL(url);resolve(img)};
+      img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error('Não foi possível ler a imagem.'))};
+      img.src=url;
+    });
+  }
+  const sw=source.width||source.naturalWidth, sh=source.height||source.naturalHeight;
+  if(!sw||!sh) throw new Error('A imagem não tem dimensões válidas.');
+  const canvas=document.createElement('canvas');
+  canvas.width=TARGET_W; canvas.height=TARGET_H;
+  const ctx=canvas.getContext('2d');
+  if(!ctx) throw new Error('O navegador não permite preparar a imagem.');
+  ctx.fillStyle='#fff'; ctx.fillRect(0,0,TARGET_W,TARGET_H);
+  const scale=Math.min((TARGET_W-PADDING*2)/sw,(TARGET_H-PADDING*2)/sh);
+  const dw=Math.max(1,Math.round(sw*scale)), dh=Math.max(1,Math.round(sh*scale));
+  const dx=Math.round((TARGET_W-dw)/2), dy=Math.round((TARGET_H-dh)/2);
+  ctx.imageSmoothingEnabled=true; ctx.imageSmoothingQuality='high';
+  ctx.drawImage(source,dx,dy,dw,dh);
+  if(source.close)source.close();
+  const blob=await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('Não foi possível preparar a imagem.')),'image/jpeg',0.92));
+  return new File([blob],`${String(file.name||'produto').replace(/\.[^.]+$/,'')}.jpg`,{type:'image/jpeg',lastModified:Date.now()});
+}
+
 async function bulkUploadProductImages(files){
   const list=[...(files||[])];
   const out=document.getElementById('bulkResult');
@@ -258,9 +290,9 @@ async function bulkUploadProductImages(files){
       });
       if(!p){missing++;errors.push(`${file.name}: não foi encontrada a referência correspondente.`);showProgress('A carregar fotografias…',progressFor(i+1,total),`${i+1} de ${total} processadas · ${file.name} — sem correspondência`);continue}
       try{
-        const ext=(file.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'')||'jpg';
-        const path=`products/${String(p.sku).replace(/[^a-zA-Z0-9_-]/g,'_')}-${crypto.randomUUID()}.${ext}`;
-        const up=await sb.storage.from('product-images').upload(path,file,{upsert:false,contentType:file.type||'image/jpeg'});
+        const prepared=await prepareProductImage(file);
+        const path=`products/${String(p.sku).replace(/[^a-zA-Z0-9_-]/g,'_')}-${crypto.randomUUID()}.jpg`;
+        const up=await sb.storage.from('product-images').upload(path,prepared,{upsert:false,contentType:'image/jpeg'});
         if(up.error)throw up.error;
         const imageUrl=sb.storage.from('product-images').getPublicUrl(path).data.publicUrl;
         const {error}=await sb.from('products').update({image_url:imageUrl}).eq('id',p.id);
@@ -296,7 +328,7 @@ function openProductEditorById(id){const p=window.__adminProducts?.find(x=>x.id=
 
 function openProductEditor(p={}){const obj=JSON.stringify(p).replace(/</g,'\\u003c');document.body.insertAdjacentHTML('beforeend',`<div id="productModal" class="modal open"><div class="modal-card"><div class="modal-head"><div><div class="eyebrow">Catálogo</div><h2 style="margin:4px 0">${p.id?'Editar produto':'Novo produto'}</h2></div><button class="btn btn-light" data-action="close-product">Fechar</button></div><div class="modal-body"><form id="productForm" class="form-grid"><input type="hidden" name="id" value="${esc(p.id||'')}"><div class="form-group"><label class="label">Referência / SKU</label><input class="field" name="sku" required value="${esc(p.sku||'')}"></div><div class="form-group"><label class="label">Família</label><input class="field" name="category" value="${esc(p.category||'')}"></div><div class="form-group full"><label class="label">Nome do produto</label><input class="field" name="name" required value="${esc(p.name||'')}"></div><div class="form-group full"><label class="label">Descrição curta</label><input class="field" name="short_description" value="${esc(p.short_description||'')}"></div><div class="form-group"><label class="label">Stock físico</label><input class="field" name="stock_quantity" type="number" min="0" step="1" value="${esc(p.stock_quantity??0)}"></div><div class="form-group"><label class="label">Preço interno</label><input class="field" name="catalog_price" type="number" min="0" step="0.01" value="${esc(p.catalog_price??'')}"><span class="hint">Nunca apresentado ao cliente; usado apenas para ordenação.</span></div><div class="form-group"><label class="label">Unidade</label><input class="field" name="unit" value="${esc(p.unit||'UNI')}"></div><div class="form-group"><label class="label">URL da imagem</label><input class="field" name="image_url" value="${esc(p.image_url||'')}" placeholder="https://..."></div><div class="form-group"><label class="label">Carregar imagem</label><input class="field" name="image_file" type="file" accept="image/*"></div><div class="form-group"><label class="label">Código de barras</label><input class="field" name="barcode" value="${esc(p.barcode||'')}"></div><div class="form-group"><label class="label">Opções</label><label style="font-size:12px"><input name="active" type="checkbox" ${p.active!==false?'checked':''}> Publicar no catálogo</label><label style="font-size:12px"><input name="in_stock" type="checkbox" ${p.in_stock?'checked':''}> Mostrar como <strong>Em stock</strong> e permitir encomenda</label></div><div class="form-group full"><button class="btn btn-primary" type="submit">Guardar produto</button></div></form></div></div></div>`);document.getElementById('productForm').addEventListener('submit',e=>saveProduct(e))}
 
-async function saveProduct(e){e.preventDefault();const f=new FormData(e.target);const id=f.get('id');let imageUrl=f.get('image_url')||null;const file=f.get('image_file');try{if(file?.size){const ext=(file.name.split('.').pop()||'jpg').toLowerCase();const path=`products/${crypto.randomUUID()}.${ext}`;const up=await sb.storage.from('product-images').upload(path,file,{upsert:false,contentType:file.type});if(up.error)throw up.error;imageUrl=sb.storage.from('product-images').getPublicUrl(path).data.publicUrl}const payload={sku:String(f.get('sku')).trim(),category:String(f.get('category')||'').trim()||'Outros',name:String(f.get('name')).trim(),short_description:String(f.get('short_description')||'').trim(),stock_quantity:Number(f.get('stock_quantity')||0),unit:String(f.get('unit')||'UNI').trim(),image_url:imageUrl,barcode:String(f.get('barcode')||'').trim()||null,active:f.get('active')==='on',in_stock:f.get('in_stock')==='on',catalog_price:f.get('catalog_price')===''?null:Number(f.get('catalog_price'))};let q=sb.from('products');const r=id?q.update(payload).eq('id',id):q.insert(payload);const {error}=await r;if(error)throw error;document.getElementById('productModal').remove();toast('Produto guardado.');renderAdmin()}catch(err){toast(err.message||'Erro ao guardar produto.')}}
+async function saveProduct(e){e.preventDefault();const f=new FormData(e.target);const id=f.get('id');let imageUrl=f.get('image_url')||null;const file=f.get('image_file');try{if(file?.size){showProgress('A preparar fotografia…',15,'A redimensionar para o formato de catálogo 4:5');const prepared=await prepareProductImage(file);showProgress('A carregar fotografia…',55,'A guardar imagem otimizada');const path=`products/${crypto.randomUUID()}.jpg`;const up=await sb.storage.from('product-images').upload(path,prepared,{upsert:false,contentType:'image/jpeg'});if(up.error)throw up.error;imageUrl=sb.storage.from('product-images').getPublicUrl(path).data.publicUrl}const payload={sku:String(f.get('sku')).trim(),category:String(f.get('category')||'').trim()||'Outros',name:String(f.get('name')).trim(),short_description:String(f.get('short_description')||'').trim(),stock_quantity:Number(f.get('stock_quantity')||0),unit:String(f.get('unit')||'UNI').trim(),image_url:imageUrl,barcode:String(f.get('barcode')||'').trim()||null,active:f.get('active')==='on',in_stock:f.get('in_stock')==='on',catalog_price:f.get('catalog_price')===''?null:Number(f.get('catalog_price'))};let q=sb.from('products');const r=id?q.update(payload).eq('id',id):q.insert(payload);const {error}=await r;if(error)throw error;document.getElementById('productModal').remove();toast('Produto guardado.');renderAdmin();setTimeout(hideProgress,500)}catch(err){hideProgress();toast(err.message||'Erro ao guardar produto.')}}
 
 
 function adminImport(c){c.innerHTML=`<div class="panel"><h2 class="panel-title">Importação Sage 50</h2><p class="hint">Separe as duas operações: use <strong>Artigos</strong> quando quiser atualizar o catálogo e <strong>Stock</strong> quando quiser apenas atualizar existências.</p><div class="tabs admin-import-tabs"><button class="tab ${state.importMode==='articles'?'active':''}" data-action="import-mode" data-mode="articles">Importar artigos</button><button class="tab ${state.importMode==='stock'?'active':''}" data-action="import-mode" data-mode="stock">Atualizar stock</button></div><div class="notice" style="margin-top:16px">${state.importMode==='articles'?'<strong>Importar artigos</strong><br>Selecione apenas a “Listagem de Artigos” do Sage. Cria/atualiza referências, nomes, famílias, unidades e códigos de barras. O stock existente não é alterado.':'<strong>Atualizar stock</strong><br>Selecione apenas o “Inventário de existências” do Sage. Atualiza exclusivamente as existências por referência (SKU), sem mexer nos restantes dados do produto.'}</div><div class="dropzone" style="margin:18px 0"><input id="excelFiles" class="file-input" type="file" accept=".xls,.xlsx,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"><label for="excelFiles"><strong>Selecionar ficheiro Excel</strong><br><span class="hint">${state.importMode==='articles'?'Listagem de Artigos':'Inventário de existências'}</span></label></div><div id="selectedFiles" class="hint" style="margin:0 0 15px">Nenhum ficheiro selecionado.</div>${state.importMode==='articles'?'<label style="display:block;font-size:12px;margin-bottom:15px"><input id="publishImported" type="checkbox" checked> Publicar automaticamente produtos normais</label>':''}<button id="importBtn" class="btn btn-primary" data-action="import-excel">${state.importMode==='articles'?'Importar / atualizar artigos':'Atualizar stock'}</button><div id="importResult" style="margin-top:15px"></div><div class="notice" style="margin-top:18px"><strong>Segurança:</strong> os preços e restantes campos comerciais do Excel não são publicados no catálogo.</div></div>`;document.getElementById('excelFiles').addEventListener('change',e=>{const f=e.target.files?.[0];document.getElementById('selectedFiles').textContent=f?`Selecionado: ${f.name} (${Math.round(f.size/1024)} KB)`:'Nenhum ficheiro selecionado.'})}

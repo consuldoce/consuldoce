@@ -1,6 +1,14 @@
-# CONSULDOCE — Catálogo B2B v30
+# CONSULDOCE — Catálogo B2B v32
 
 Versão consolidada com layout responsivo reforçado para iPhone/iOS e Android, mantendo o catálogo B2B, administração, encomendas, stock, PWA, autenticação e integração Supabase/Resend. A v18 acrescenta contacto telefónico estruturado e morada completa no registo de cliente. A v19 acrescenta uma área autenticada de edição dos dados do cliente. A v20 acrescenta múltiplas moradas de entrega. A v21 melhora o seletor de telemóvel para ecrãs móveis e garante que o email de encomenda inclui todos os dados do cliente e as moradas cadastradas. A v23 corrige a largura do campo de telemóvel no registo e na área de cliente, colocando o bloco numa linha própria para garantir espaço suficiente para pelo menos 9 dígitos em ecrãs móveis.
+
+
+### Alterações v32
+- Cartões do catálogo passam a ter estrutura uniforme e proporção visual adequada a fotografias de embalagens.
+- As fotografias carregadas pelo backoffice são automaticamente preparadas para um formato normalizado 4:5 (800 × 1000 px), com fundo branco e a embalagem inteira visível, mantendo proporções.
+- O mesmo tratamento é aplicado ao carregamento individual e ao carregamento de fotografias em lote.
+- A área da imagem do catálogo usa a mesma proporção em todos os cartões, evitando cortes e alturas inconsistentes.
+- Cache do Service Worker atualizada.
 
 
 ### Alterações v30

@@ -275,3 +275,12 @@ O formulário de registo bloqueia imediatamente o botão de criação de conta e
 ### Migração necessária
 
 Executar uma vez no Supabase SQL Editor: `supabase/migration_catalog_stock.sql`. Depois disso, fazer o deploy da aplicação.
+
+
+## Gestão de stock em lote
+
+No backoffice, o administrador pode filtrar por família, pesquisa ou referência, selecionar todos os produtos visíveis e aplicar em lote:
+
+- **Marcar Em stock** — permite encomendas no catálogo, independentemente do `stock_quantity` físico importado.
+- **Marcar Fora de stock** — impede novas encomendas desse produto.
+- A seleção continua a respeitar o filtro ativo; **Selecionar todos os visíveis** não seleciona produtos que estejam fora do filtro.

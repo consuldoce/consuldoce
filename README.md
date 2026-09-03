@@ -1,6 +1,6 @@
-# CONSULDOCE — Catálogo B2B v18
+# CONSULDOCE — Catálogo B2B v19
 
-Versão consolidada com layout responsivo reforçado para iPhone/iOS e Android, mantendo o catálogo B2B, administração, encomendas, stock, PWA, autenticação e integração Supabase/Resend. A v18 acrescenta contacto telefónico estruturado e morada completa no registo de cliente.
+Versão consolidada com layout responsivo reforçado para iPhone/iOS e Android, mantendo o catálogo B2B, administração, encomendas, stock, PWA, autenticação e integração Supabase/Resend. A v18 acrescenta contacto telefónico estruturado e morada completa no registo de cliente. A v19 acrescenta uma área autenticada de edição dos dados do cliente.
 
 ### Alterações v18
 - Registo de cliente com número de telemóvel obrigatório.
@@ -236,3 +236,10 @@ A interface de administração foi otimizada para iPhone/iOS e Android: navegaç
 Para uma base Supabase já em produção, não é necessário substituir o schema inteiro. Aplicar a migration externa `migration_client_contact_address_v18.sql`, que acrescenta os campos de contacto/morada, migra a morada antiga para `address_line1` e atualiza o trigger de criação de perfil. A migration não apaga clientes, produtos ou encomendas.
 
 Para uma instalação nova, usar apenas o `supabase_schema.sql` que acompanha esta versão. As migrations de atualização são mantidas fora do ZIP de distribuição consolidado.
+
+
+## Área de cliente — v19
+
+A aplicação inclui uma secção autenticada **Minha conta** onde o cliente pode consultar e alterar os seus dados de empresa/contacto: nome, NIF, telemóvel com país/indicativo, endereço em duas linhas, código postal, localidade, país e email. Inclui também alteração de palavra-passe.
+
+As alterações de NIF e email continuam protegidas pelas regras de unicidade da base de dados; a validação formal do NIF português permanece desativada por decisão funcional atual. Alterações de email através do Supabase Auth podem exigir confirmação no novo endereço.

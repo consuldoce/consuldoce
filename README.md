@@ -1,6 +1,13 @@
-# CONSULDOCE — Catálogo B2B v21
+# CONSULDOCE — Catálogo B2B v22
 
-Versão consolidada com layout responsivo reforçado para iPhone/iOS e Android, mantendo o catálogo B2B, administração, encomendas, stock, PWA, autenticação e integração Supabase/Resend. A v18 acrescenta contacto telefónico estruturado e morada completa no registo de cliente. A v19 acrescenta uma área autenticada de edição dos dados do cliente. A v20 acrescenta múltiplas moradas de entrega. A v21 melhora o seletor de telemóvel para ecrãs móveis e garante que o email de encomenda inclui todos os dados do cliente e as moradas cadastradas.
+Versão consolidada com layout responsivo reforçado para iPhone/iOS e Android, mantendo o catálogo B2B, administração, encomendas, stock, PWA, autenticação e integração Supabase/Resend. A v18 acrescenta contacto telefónico estruturado e morada completa no registo de cliente. A v19 acrescenta uma área autenticada de edição dos dados do cliente. A v20 acrescenta múltiplas moradas de entrega. A v21 melhora o seletor de telemóvel para ecrãs móveis e garante que o email de encomenda inclui todos os dados do cliente e as moradas cadastradas. A v22 corrige a largura do campo de telemóvel no registo e na área de cliente, colocando o bloco numa linha própria para garantir espaço suficiente para pelo menos 9 dígitos em ecrãs móveis.
+
+
+### Alterações v22
+- Campo de telemóvel colocado numa linha própria no registo e na área de cliente.
+- Seletor reduzido a bandeira + indicativo internacional, mantendo o número com largura suficiente para visualizar pelo menos 9 dígitos em telemóveis.
+- Layout responsivo ajustado sem alterar a estrutura da base de dados.
+- Não é necessária nova migration SQL para esta versão.
 
 ### Alterações v18
 - Registo de cliente com número de telemóvel obrigatório.

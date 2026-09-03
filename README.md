@@ -1,3 +1,15 @@
+# CONSULDOCE — Catálogo B2B v16
+
+Versão consolidada com layout responsivo reforçado para iPhone/iOS e Android, mantendo o catálogo B2B, administração, encomendas, stock, PWA, autenticação e integração Supabase/Resend.
+
+### Correção v16
+- Cabeçalho responsivo em ecrãs pequenos, sem sobreposição de logótipo e botões.
+- Ações do cabeçalho podem ocupar uma segunda linha e têm scroll horizontal seguro quando necessário.
+- Conteúdo, filtros, cartões, modais e carrinho limitados à largura do viewport.
+- Catálogo em uma coluna em telemóveis para leitura e interação mais confortável.
+- Mantida a política CSP sem `unsafe-inline`.
+- Cache do PWA atualizada para v16.
+
 # CONSULDOCE — Catálogo B2B
 
 Catálogo B2B privado da CONSULDOCE, publicado como aplicação estática no Cloudflare Pages e ligado ao Supabase. O objetivo é permitir que clientes autenticados consultem o catálogo de mercadoria, escolham quantidades e enviem encomendas sem apresentação de preços.

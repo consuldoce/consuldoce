@@ -3,3 +3,44 @@
 
 .stock-filter{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;white-space:nowrap}.stock-filter input{accent-color:var(--purple-3)}.sort{max-width:210px}
 @media(max-width:780px){.sort{max-width:none;flex:1;min-width:180px}}
+
+/* Mobile / iOS layout hardening */
+@media (max-width: 780px){
+  html,body{width:100%;max-width:100%;overflow-x:hidden}
+  .topbar{position:sticky;top:0}
+  .topbar-inner{width:100%;max-width:none;min-height:0;padding:10px 14px 12px;display:grid;grid-template-columns:1fr;gap:9px;overflow:hidden}
+  .brand{width:100%;min-width:0}
+  .brand-mark{width:42px;height:42px;flex:0 0 42px}
+  .brand-name{font-size:15px}
+  .topbar-inner>.spacer{display:none}
+  .top-actions{width:100%;min-width:0;display:flex;gap:7px;overflow-x:auto;overflow-y:hidden;padding:0 0 2px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .top-actions::-webkit-scrollbar{display:none}
+  .top-actions .btn{flex:0 0 auto;white-space:nowrap;padding:9px 12px;font-size:13px}
+  .page{width:100%;max-width:100%;padding:20px 14px 50px;overflow:hidden}
+  .hero{gap:14px;margin-top:8px}
+  .hero>.btn{width:100%}
+  .toolbar{width:100%;display:grid;grid-template-columns:minmax(0,1fr);gap:9px;padding:10px;margin-bottom:16px}
+  .toolbar .search,.toolbar .category,.toolbar .sort{width:100%;max-width:none;min-width:0}
+  .stock-filter{justify-self:start;padding:2px 0}
+  .catalog-grid{width:100%;grid-template-columns:1fr;gap:12px}
+  .card{min-width:0;width:100%}
+  .product-image{height:210px}
+  .card-body{padding:14px}
+  .product-name{font-size:16px;line-height:1.25;min-height:0}
+  .qty-row{gap:8px}
+  .qty{flex:0 0 auto}
+  .qty-row .btn{min-width:0}
+  .drawer-panel{width:100%;max-width:100%}
+  .modal{padding:12px}
+  .modal-card{width:100%;max-width:100%}
+  .admin-layout{width:100%;min-width:0}
+  .side{max-width:100%;overflow-x:auto;scrollbar-width:none}
+  .side::-webkit-scrollbar{display:none}
+  .panel,.table-wrap{max-width:100%;min-width:0}
+}
+@media (max-width: 420px){
+  .top-actions .btn{font-size:12px;padding:9px 11px}
+  .h1{font-size:29px}
+  .lead{font-size:15px;line-height:1.45}
+  .product-image{height:200px}
+}

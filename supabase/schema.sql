@@ -31,6 +31,8 @@ create table if not exists public.products (
   unit text not null default 'UNI',
   stock_quantity numeric not null default 0 check (stock_quantity >= 0),
   track_stock boolean not null default true,
+  in_stock boolean not null default false,
+  catalog_price numeric,
   image_url text,
   active boolean not null default true,
   sort_order integer not null default 0,
@@ -114,7 +116,7 @@ alter table public.order_items enable row level security;
 drop policy if exists order_items_select on public.order_items;
 create policy order_items_select on public.order_items for select to authenticated using (exists(select 1 from public.orders o where o.id=order_id and (o.client_id=auth.uid() or public.is_admin())));
 
--- Atomic order creation: validates product state, checks stock and decrements it under row locks.
+-- Atomic order creation: validates product state. Availability is controlled by admin; physical stock is informational only.
 create or replace function public.create_order(p_items jsonb, p_notes text default null)
 returns uuid
 language plpgsql security definer set search_path=public
@@ -138,14 +140,12 @@ begin
     if v_qty is null or v_qty <= 0 then raise exception 'Quantidade inválida'; end if;
     select * into v_product from public.products where id=v_product_id and active=true for update;
     if not found then raise exception 'Produto indisponível'; end if;
-    if v_product.track_stock and v_qty > v_product.stock_quantity then
-      raise exception 'Stock insuficiente para %', v_product.name;
+    if not v_product.in_stock then
+      raise exception 'Produto fora de stock: %', v_product.name;
     end if;
     insert into public.order_items(order_id,product_id,sku,product_name,quantity)
       values(v_order_id,v_product.id,v_product.sku,v_product.name,v_qty);
-    if v_product.track_stock then
-      update public.products set stock_quantity=stock_quantity-v_qty where id=v_product.id;
-    end if;
+    -- stock_quantity is not decremented automatically: admin controls the catalogue availability flag.
   end loop;
   return v_order_id;
 exception when others then

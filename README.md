@@ -261,3 +261,17 @@ O registo e a recuperação de palavra-passe passam explicitamente `emailRedirec
 ## Proteção contra submissão duplicada
 
 O formulário de registo bloqueia imediatamente o botão de criação de conta enquanto o pedido de `signUp` está em curso. Cliques repetidos não originam chamadas adicionais ao Supabase. Em caso de erro, o botão é reativado para permitir nova tentativa.
+
+
+## Stock e ordenação do catálogo
+
+- O estado apresentado ao cliente é apenas **Em stock** ou **Fora de stock**.
+- O estado é definido manualmente pelo administrador através de `in_stock`.
+- O `stock_quantity` importado do Sage é tratado como **stock físico informativo** e não impede uma encomenda quando o administrador marcou o artigo como Em stock.
+- Se uma encomenda contiver artigos marcados como Em stock mas com stock físico registado a zero (ou sem stock importado), o email enviado à CONSULDOCE inclui um aviso e a lista desses artigos.
+- O cliente pode filtrar por **Apenas em stock** e ordenar por nome, categoria ou preço. O preço nunca é apresentado ao cliente; `catalog_price` é um campo interno usado apenas para ordenação e pode ser preenchido pelo administrador ou importado quando a folha Excel tiver uma coluna de preço reconhecida.
+- A função SQL `create_order` valida novamente `in_stock` no servidor, pelo que não é possível contornar a regra apenas alterando o navegador.
+
+### Migração necessária
+
+Executar uma vez no Supabase SQL Editor: `supabase/migration_catalog_stock.sql`. Depois disso, fazer o deploy da aplicação.

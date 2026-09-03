@@ -284,3 +284,8 @@ No backoffice, o administrador pode filtrar por família, pesquisa ou referênci
 - **Marcar Em stock** — permite encomendas no catálogo, independentemente do `stock_quantity` físico importado.
 - **Marcar Fora de stock** — impede novas encomendas desse produto.
 - A seleção continua a respeitar o filtro ativo; **Selecionar todos os visíveis** não seleciona produtos que estejam fora do filtro.
+
+
+## Ordenação e ID do produto
+
+O catálogo do cliente não apresenta ordenação por preço. A ordenação foi substituída por **ID do produto (SKU/referência)**. No backoffice, o ID do produto é uma coluna própria e existe um filtro dedicado, além da possibilidade de ordenar a listagem por ID. O UUID interno da base de dados continua a ser usado internamente e não é exposto ao cliente.

@@ -305,7 +305,7 @@ O ZIP consolidado continua a ter **um único `supabase_schema.sql` canónico na 
 - O indicativo continua guardado no campo `profiles.phone_country_code` e o número em `profiles.phone_number`.
 - O email de cada encomenda inclui nome/empresa, NIF, email, telemóvel, morada atualmente registada, morada efetivamente escolhida para entrega e as moradas existentes no cadastro.
 - A morada histórica da encomenda continua a ser usada para preservar o endereço escolhido no momento da compra.
-- Cache do PWA atualizada para forçar a entrada da versão v21 após deploy.
+- Cache do PWA atualizada para forçar a entrada da versão V28 após deploy.
 
 Não é necessária uma nova migration SQL para a v21: não foram introduzidas novas colunas ou tabelas.
 

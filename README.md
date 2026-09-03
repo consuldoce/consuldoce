@@ -133,7 +133,7 @@ As imagens são consideradas conteúdo de catálogo, não informação confidenc
 
 ## Importação Sage
 
-Na administração → **Importar Excel**:
+Na administração → **Importar Excel (artigos e stock em operações separadas)**:
 
 1. selecione um ou ambos os ficheiros `.XLS`/`.XLSX`;
 2. a aplicação identifica a listagem e o inventário pelas colunas;
@@ -195,3 +195,32 @@ Esta primeira versão privilegia simplicidade de deploy e segurança do backend.
 - integração direta com o Sage/API ou sincronização agendada de stock;
 - domínio próprio, por exemplo `catalogo.consuldoce.pt`;
 - CSP mais restritiva depois de transformar o frontend numa build Vite/React sem handlers inline.
+
+## Registo de clientes e recuperação de acesso
+
+A versão atual acrescenta:
+
+- validação do algoritmo de NIF português no formulário;
+- normalização do NIF para 9 dígitos;
+- prevenção de NIF duplicado na base de dados através de índice único;
+- prevenção de email duplicado no perfil (além da própria autenticação Supabase);
+- verificação prévia de disponibilidade de email/NIF durante o registo;
+- recuperação de palavra-passe por email através do Supabase Auth;
+- formulário seguro para definir uma nova palavra-passe após o link de recuperação;
+- área de produtos com pesquisa, filtro por família, seleção múltipla, publicação/ocultação em lote e associação de fotografias em lote por nome de ficheiro igual à referência/SKU.
+
+### Migração obrigatória desta versão
+
+Como o projeto já tinha sido instalado anteriormente, execute uma vez no Supabase SQL Editor:
+
+`supabase/migration_registration_security.sql`
+
+Esta migração deve ser executada **depois** do `supabase/schema.sql` original. Não contém preços nem dados de clientes.
+
+### Recuperação de palavra-passe no Supabase
+
+Em **Authentication → URL Configuration**, adicione como Redirect URL o endereço do catálogo com `?recovery=1#/reset-password`. Para o domínio Cloudflare, por exemplo:
+
+`https://consuldoce.pages.dev/?recovery=1#/reset-password`
+
+Se também utilizar um domínio próprio, adicione a URL equivalente desse domínio. O frontend nunca recebe nem armazena a service-role key.

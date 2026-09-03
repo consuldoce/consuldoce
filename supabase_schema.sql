@@ -76,6 +76,42 @@ where active = true;
 
 grant select on public.catalog_products to authenticated;
 
+-- Customer catalogue RPC: the browser calls this function instead of querying
+-- the products table/view directly. It deliberately exposes no price and no
+-- physical stock quantity. SECURITY DEFINER lets it read the protected products
+-- table while returning only the approved customer-facing columns.
+create or replace function public.get_catalog_products()
+returns table (
+  id uuid,
+  sku text,
+  name text,
+  short_description text,
+  category text,
+  barcode text,
+  unit text,
+  in_stock boolean,
+  image_url text,
+  active boolean,
+  sort_order integer,
+  created_at timestamptz,
+  updated_at timestamptz
+)
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select p.id, p.sku, p.name, p.short_description, p.category, p.barcode,
+         p.unit, p.in_stock, p.image_url, p.active, p.sort_order,
+         p.created_at, p.updated_at
+  from public.products p
+  where p.active = true
+  order by p.sort_order, p.name, p.sku;
+$$;
+
+revoke execute on function public.get_catalog_products() from public;
+grant execute on function public.get_catalog_products() to authenticated;
+
 -- -----------------------------------------------------------------------------
 -- Orders
 -- -----------------------------------------------------------------------------

@@ -129,7 +129,7 @@ O site é publicado em:
 - O NIF é obrigatório para perfis de cliente, mas a validação de dígito de controlo está deliberadamente desativada nesta fase.
 - A criação de encomendas é feita através de função PostgreSQL `SECURITY DEFINER`, com validação server-side do estado dos produtos.
 - O browser não recebe nem usa a service role key.
-- O catálogo público é servido através da view `catalog_products`, que exclui deliberadamente o preço interno e o stock físico; o cliente recebe apenas o estado comercial `in_stock`. A tabela base `products` é legível apenas por administradores.
+- O catálogo público é servido através da função segura `get_catalog_products()`, que devolve exclusivamente os campos necessários ao cliente e exclui deliberadamente o preço interno e o stock físico. A tabela base `products` é legível apenas por administradores.
 - A Edge Function valida a sessão do utilizador e confirma que a encomenda pertence ao utilizador, salvo quando o utilizador é administrador.
 - A Edge Function de email restringe CORS ao domínio de produção da CONSULDOCE.
 - O conteúdo HTML dos emails é escapado antes de ser inserido na mensagem.
@@ -174,3 +174,10 @@ Em Cloudflare Pages, publicar todos os ficheiros da raiz do projeto. Não é nec
 ## Correção de arranque
 
 A versão atual usa `SUPABASE_PUBLISHABLE_KEY` no frontend, compatível com a chave `sb_publishable_...` configurada em `config.js`. A chave é pública por natureza; nunca deve ser substituída por uma `service_role` key.
+
+
+## Migração do catálogo existente
+
+Se a base de dados já estiver instalada e contiver os produtos atuais, **não é necessário apagar dados nem executar novamente o schema completo**. Para esta correção do carregamento do catálogo, executar uma única vez o ficheiro de migração fornecido separadamente: `migration_catalog_rpc.sql`.
+
+O ZIP de produção continua a conter apenas `supabase_schema.sql` como ficheiro SQL canónico na raiz; a migration é fornecida fora do ZIP apenas para facilitar a atualização de uma instalação já existente.

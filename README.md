@@ -1,9 +1,9 @@
-# CONSULDOCE — Catálogo B2B v24
+# CONSULDOCE — Catálogo B2B v25
 
 Versão consolidada com layout responsivo reforçado para iPhone/iOS e Android, mantendo o catálogo B2B, administração, encomendas, stock, PWA, autenticação e integração Supabase/Resend. A v18 acrescenta contacto telefónico estruturado e morada completa no registo de cliente. A v19 acrescenta uma área autenticada de edição dos dados do cliente. A v20 acrescenta múltiplas moradas de entrega. A v21 melhora o seletor de telemóvel para ecrãs móveis e garante que o email de encomenda inclui todos os dados do cliente e as moradas cadastradas. A v23 corrige a largura do campo de telemóvel no registo e na área de cliente, colocando o bloco numa linha própria para garantir espaço suficiente para pelo menos 9 dígitos em ecrãs móveis.
 
 
-### Alterações v24
+### Alterações v25
 - Fluxo de recuperação de palavra-passe separado do login e do catálogo.
 - O email de recuperação aponta sempre para `/recovery`.
 - A rota `/recovery` é reconhecida mesmo quando aberta como `.../recovery?1`.
@@ -307,3 +307,10 @@ Não é necessária uma nova migration SQL para a v21: não foram introduzidas n
 ## Recuperação de palavra-passe — v23
 
 O pedido de recuperação usa um `redirectTo` explícito para a mesma origem com `?recovery=1`, sem depender de hash routing. A aplicação reconhece também sessões de `PASSWORD_RECOVERY` e tokens de recuperação no fragmento, encaminhando o utilizador para `#/reset-password` antes de apresentar o catálogo. Em Supabase Authentication → URL Configuration deve continuar autorizado o domínio do catálogo e o padrão `https://consuldoce.pages.dev/**`.
+
+
+## v25 — operações com progresso
+- O carregamento de fotografias em lote apresenta progresso percentual, ficheiro em processamento e resultado detalhado.
+- Atualizações em lote de stock e publicação/ocultação apresentam progresso e estado de conclusão/erro.
+- Importações de artigos e stock apresentam percentagem de processamento e detalhe da operação.
+- O seletor de fotografias é reiniciado após cada operação para permitir selecionar novamente os mesmos ficheiros.

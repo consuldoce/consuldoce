@@ -1,3 +1,5 @@
+CONSULDOCE — versão 61
+
 ## Versão v51
 - Administração: separador **Importar dados** concentra importação Sage 50 e carregamento de fotografias em lote.
 - A página Produtos mantém as ações de seleção/gestão sem o carregamento de imagens.

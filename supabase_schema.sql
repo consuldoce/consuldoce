@@ -643,6 +643,21 @@ where not exists(select 1 from public.customer_addresses a where a.client_id=p.i
   and (coalesce(p.address_line1,'')<>'' or coalesce(p.address_line2,'')<>'' or coalesce(p.postal_code,'')<>'' or coalesce(p.postal_locality,'')<>'');
 
 
+-- Compatibility for existing databases: historical client snapshots used by
+-- administration and account deletion/reset must exist before the policies,
+-- queries and Edge Function rely on them.
+alter table public.orders add column if not exists client_name_snapshot text not null default '';
+alter table public.orders add column if not exists client_email_snapshot text not null default '';
+alter table public.orders add column if not exists client_nif_snapshot text not null default '';
+
+-- Backfill snapshots for existing orders while the client profile still exists.
+update public.orders o
+set client_name_snapshot = coalesce(nullif(o.client_name_snapshot,''), p.full_name, ''),
+    client_email_snapshot = coalesce(nullif(o.client_email_snapshot,''), p.email, ''),
+    client_nif_snapshot = coalesce(nullif(o.client_nif_snapshot,''), p.nif, '')
+from public.profiles p
+where o.client_id = p.id;
+
 -- -----------------------------------------------------------------------------
 -- Orders
 -- -----------------------------------------------------------------------------

@@ -371,7 +371,14 @@ async function adminClients(c){
 
 async function invokeClientAdmin(action,clientId){
   const {data,error}=await sb.functions.invoke('admin-client-management',{body:{action,client_id:clientId}});
-  if(error)throw error;
+  if(error){
+    console.error('admin-client-management',error);
+    const msg=String(error.message||'');
+    if(/failed to send a request|failed to fetch|network|fetch/i.test(msg)){
+      throw new Error('Não foi possível contactar a função de administração. Confirme que a Edge Function “admin-client-management” está publicada no Supabase.');
+    }
+    throw error;
+  }
   if(data?.error)throw new Error(data.error);
   return data;
 }

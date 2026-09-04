@@ -341,7 +341,7 @@ O pedido de recuperação usa um `redirectTo` explícito para a mesma origem com
 
 A inicialização do cliente Supabase é feita de forma protegida, evitando que uma falha na criação do cliente deixe a aplicação num ecrã branco. O versionamento de cache do Service Worker também foi incrementado para v27.
 
-## V37 — gestão de clientes e contas
+## V38 — gestão de clientes e contas
 - A lista de países do registo/conta/moradas passou a um campo pesquisável com lista de sugestões, evitando o menu nativo excessivamente alto em alguns browsers.
 - O registo concluído mostra uma página própria a confirmar que a conta foi criada e que é necessário confirmar o email para concluir a ativação. Ao sair desse ecrã, o formulário é descartado.
 - O NIF continua protegido por unicidade server-side através do índice único existente.
@@ -370,3 +370,12 @@ A `service_role` nunca deve ser colocada em `config.js` nem no browser.
 - Compatibilidade com bases existentes: adiciona `profiles.must_change_password` se ainda não existir.
 - Garante índices únicos para NIF e email normalizado.
 - A validação server-side apresenta mensagens claras quando NIF ou email já existem.
+
+
+## V38 — correção de administração e histórico de encomendas
+- Compatibilidade com bases de dados existentes: `orders.client_name_snapshot`, `orders.client_email_snapshot` e `orders.client_nif_snapshot` são adicionados quando faltam e preenchidos a partir dos perfis existentes.
+- A administração deixa de falhar ao abrir a secção de encomendas em bases de dados que ainda não tinham estes campos.
+- A chamada de gestão de clientes apresenta uma mensagem clara quando a Edge Function não está publicada/acessível.
+- A função `admin-client-management` valida a sessão e as permissões no servidor.
+- Para uma instalação existente, executar o delta SQL V37→V38 antes de utilizar a administração.
+- Publicar novamente a Edge Function `admin-client-management` no projeto Supabase.

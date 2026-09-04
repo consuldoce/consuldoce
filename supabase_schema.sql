@@ -313,7 +313,7 @@ begin
     new.id,
     lower(trim(coalesce(new.email,''))),
     coalesce(new.raw_user_meta_data->>'full_name',''),
-    regexp_replace(coalesce(new.raw_user_meta_data->>'nif',''),'\D','','g'),
+    regexp_replace(upper(coalesce(new.raw_user_meta_data->>'nif','')),'[^0-9A-Z]','','g'),
     trim(concat_ws(', ',
       nullif(trim(coalesce(new.raw_user_meta_data->>'address_line1','')),''),
       nullif(trim(coalesce(new.raw_user_meta_data->>'address_line2','')),''),
@@ -373,7 +373,7 @@ set search_path = public
 as $$
 begin
   new.email := lower(trim(coalesce(new.email,'')));
-  new.nif := regexp_replace(coalesce(new.nif,''),'\D','','g');
+  new.nif := regexp_replace(upper(coalesce(new.nif,'')),'[^0-9A-Z]','','g');
 
   if new.email = '' then
     raise exception 'Email obrigatório';

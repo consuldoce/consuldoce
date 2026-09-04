@@ -205,7 +205,7 @@ async function adminOrders(c){const {data,error}=await sb.from('orders').select(
 async function updateOrderStatus(id,status){const {error}=await sb.from('orders').update({status}).eq('id',id);if(error)toast(error.message);else toast('Estado atualizado.')}
 async function resendEmail(id){const {error}=await sb.functions.invoke('send-order-email',{body:{order_id:id}});toast(error?'Não foi possível enviar o email.':'Email reenviado.')}
 
-async function adminProducts(c){const {data,error}=await sb.from('products').select('*').order('name');if(error){c.innerHTML=`<div class="panel danger">${esc(error.message)}</div>`;return}window.__adminProducts=data||[];window.__selectedProducts=new Set(window.__selectedProducts||[]);const cats=[...new Set((data||[]).map(p=>p.category).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt'));c.innerHTML=`<div class="panel"><div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap"><div><h2 class="panel-title">Produtos</h2><p class="hint">${data?.length||0} registos · sem preços no catálogo.</p></div><button class="btn btn-primary" data-action="new-product">Novo produto</button></div><div class="toolbar" style="margin-top:14px"><input id="adminProductSearch" class="field search" placeholder="Pesquisar em todos os produtos..." data-action="filter-admin"><select id="adminProductCategory" class="field category" data-action="filter-admin"><option value="">Todas as famílias</option>${cats.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('')} </select><select id="adminProductSort" class="field" data-action="filter-admin"><option value="name_asc">Ordenar: Nome A–Z</option><option value="name_desc">Ordenar: Nome Z–A</option><option value="sku_asc">Ordenar: ID do produto A–Z</option><option value="sku_desc">Ordenar: ID do produto Z–A</option><option value="category_asc">Ordenar: Família A–Z</option><option value="category_desc">Ordenar: Família Z–A</option></select></div><div class="bulkbar"><label><input id="selectAllProducts" type="checkbox" data-action="toggle-all-admin"> Selecionar todos os visíveis</label><span id="selectedCount" class="hint">0 selecionados</span><button class="btn btn-light btn-small" data-action="bulk-stock" data-value="true">Marcar Em stock</button><button class="btn btn-light btn-small" data-action="bulk-stock" data-value="false">Marcar Fora de stock</button><button class="btn btn-light btn-small" data-action="bulk-active" data-value="true">Publicar selecionados</button><button class="btn btn-light btn-small" data-action="bulk-active" data-value="false">Ocultar selecionados</button><button class="btn btn-light btn-small" data-action="select-products-with-images">Selecionar com imagem</button><button class="btn btn-danger btn-small" data-action="bulk-delete-images">Apagar imagens selecionadas</button><label class="btn btn-light btn-small file-button">Carregar fotografias em lote<input type="file" accept="image/*" multiple data-action="bulk-upload-images"></label></div><div id="bulkResult" class="hint" style="margin:8px 0"></div><div class="table-wrap" style="margin-top:12px"><table class="table"><thead><tr><th></th><th>ID do produto</th><th>Imagem</th><th>Produto</th><th>Família</th><th>Estado</th><th>Stock físico</th><th>Visível</th><th></th></tr></thead><tbody id="adminProductsBody"></tbody></table></div></div>`;renderAdminProductRows(filteredAdminProducts())}
+async function adminProducts(c){const {data,error}=await sb.from('products').select('*').order('name');if(error){c.innerHTML=`<div class="panel danger">${esc(error.message)}</div>`;return}window.__adminProducts=data||[];window.__selectedProducts=new Set(window.__selectedProducts||[]);const cats=[...new Set((data||[]).map(p=>p.category).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt'));c.innerHTML=`<div class="panel"><div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap"><div><h2 class="panel-title">Produtos</h2><p class="hint">${data?.length||0} registos · sem preços no catálogo.</p></div><button class="btn btn-primary" data-action="new-product">Novo produto</button></div><div class="toolbar" style="margin-top:14px"><input id="adminProductSearch" class="field search" placeholder="Pesquisar em todos os produtos..." data-action="filter-admin"><select id="adminProductCategory" class="field category" data-action="filter-admin"><option value="">Todas as famílias</option>${cats.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('')} </select><select id="adminProductSort" class="field" data-action="filter-admin"><option value="name_asc">Ordenar: Nome A–Z</option><option value="name_desc">Ordenar: Nome Z–A</option><option value="sku_asc">Ordenar: ID do produto A–Z</option><option value="sku_desc">Ordenar: ID do produto Z–A</option><option value="category_asc">Ordenar: Família A–Z</option><option value="category_desc">Ordenar: Família Z–A</option></select></div><div class="bulkbar"><label><input id="selectAllProducts" type="checkbox" data-action="toggle-all-admin"> Selecionar todos os visíveis</label><span id="selectedCount" class="hint">0 selecionados</span><button class="btn btn-light btn-small" data-action="bulk-stock" data-value="true">Marcar Em stock</button><button class="btn btn-light btn-small" data-action="bulk-stock" data-value="false">Marcar Fora de stock</button><button class="btn btn-light btn-small" data-action="bulk-active" data-value="true">Publicar selecionados</button><button class="btn btn-light btn-small" data-action="bulk-active" data-value="false">Ocultar selecionados</button><button class="btn btn-light btn-small" data-action="select-products-with-images">Selecionar com imagem</button><button class="btn btn-danger btn-small" data-action="bulk-delete-images">Apagar imagens selecionadas</button><button class="btn btn-danger btn-small" data-action="bulk-delete-products">Eliminar produtos selecionados</button><label class="btn btn-light btn-small file-button">Carregar fotografias em lote<input type="file" accept="image/*" multiple data-action="bulk-upload-images"></label></div><div id="bulkResult" class="hint" style="margin:8px 0"></div><div class="table-wrap" style="margin-top:12px"><table class="table"><thead><tr><th></th><th>ID do produto</th><th>Imagem</th><th>Produto</th><th>Família</th><th>Estado</th><th>Stock físico</th><th>Visível</th><th></th></tr></thead><tbody id="adminProductsBody"></tbody></table></div></div>`;renderAdminProductRows(filteredAdminProducts())}
 function filteredAdminProducts(){const q=(document.getElementById('adminProductSearch')?.value||'').toLowerCase().trim(),c=document.getElementById('adminProductCategory')?.value||'',sort=document.getElementById('adminProductSort')?.value||'name_asc';let list=(window.__adminProducts||[]).filter(p=>{if(c&&p.category!==c)return false;if(!q)return true;return [p.sku,p.name,p.category,p.barcode,p.short_description,p.stock_quantity,p.in_stock?'em stock':'fora de stock',p.active?'sim':'não'].filter(v=>v!==null&&v!==undefined).join(' ').toLowerCase().includes(q)});const cmpText=(a,b)=>String(a??'').localeCompare(String(b??''),'pt',{numeric:true,sensitivity:'base'});switch(sort){case 'name_desc':list.sort((a,b)=>cmpText(b.name,a.name));break;case 'sku_asc':list.sort((a,b)=>cmpText(a.sku,b.sku));break;case 'sku_desc':list.sort((a,b)=>cmpText(b.sku,a.sku));break;case 'category_asc':list.sort((a,b)=>cmpText(a.category,b.category)||cmpText(a.name,b.name));break;case 'category_desc':list.sort((a,b)=>cmpText(b.category,a.category)||cmpText(a.name,b.name));break;default:list.sort((a,b)=>cmpText(a.name,b.name))}return list}
 function filterAdminProducts(){renderAdminProductRows(filteredAdminProducts())}
 function openProductImagePreview(id){
@@ -274,6 +274,48 @@ async function bulkDeleteProductImages(){
     if(out)out.innerHTML=`<div class="notice danger"><strong>Falha ao apagar imagens.</strong><br>${esc(err.message||'Erro desconhecido')}</div>`;
     showProgress('Operação interrompida',0,err.message||'Ocorreu um erro.');
     setTimeout(hideProgress,2500);
+  }finally{buttons.forEach(b=>b.disabled=false)}
+}
+
+async function bulkDeleteSelectedProducts(){
+  const ids=[...(window.__selectedProducts||[])];
+  const out=document.getElementById('bulkResult');
+  const products=(window.__adminProducts||[]).filter(p=>ids.includes(p.id));
+  if(!products.length){if(out)out.innerHTML='<div class="notice danger">Selecione pelo menos um produto.</div>';return}
+  if(!state.profile||state.profile.role!=='admin'){if(out)out.innerHTML='<div class="notice danger">A sua conta não tem permissões de administrador.</div>';return}
+  const ok=window.confirm(`Eliminar definitivamente ${products.length} produto${products.length===1?'':'s'} selecionado${products.length===1?'':'s'}?\n\nOs produtos serão removidos do catálogo. Esta ação não pode ser anulada.`);
+  if(!ok)return;
+  const buttons=[...document.querySelectorAll('.bulkbar button')];buttons.forEach(b=>b.disabled=true);
+  let deleted=0,failed=0,images=0;const errors=[];const total=products.length;
+  showProgress('A eliminar produtos…',0,`0 de ${total} produtos processados`);
+  if(out)out.innerHTML=`<div class="notice">A eliminar produtos… <strong>0%</strong></div>`;
+  try{
+    for(let i=0;i<products.length;i++){
+      const p=products[i];
+      try{
+        const {error}=await sb.from('products').delete().eq('id',p.id);
+        if(error)throw error;
+        deleted++;
+        const path=storagePathFromImageUrl(p.image_url);
+        if(path){
+          const {error:imageError}=await sb.storage.from('product-images').remove([path]);
+          if(!imageError)images++;
+          else errors.push(`${p.sku||p.name||p.id}: produto eliminado, mas não foi possível apagar a imagem (${imageError.message||'erro no armazenamento'})`);
+        }
+      }catch(err){failed++;errors.push(`${p.sku||p.name||p.id}: ${err.message||'erro desconhecido'}`)}
+      const pct=progressFor(i+1,total);showProgress('A eliminar produtos…',pct,`${i+1} de ${total} processados`);
+      if(out)out.innerHTML=`<div class="notice">A eliminar produtos… <strong>${pct}%</strong><br>${i+1} de ${total} processados · ${deleted} eliminados · ${failed} com erro.</div>`;
+    }
+    window.__selectedProducts.clear();
+    await adminProducts(document.getElementById('adminContent'));
+    showProgress('Eliminação concluída',100,`${deleted} produtos eliminados`);
+    const details=errors.length?`<details style="margin-top:8px"><summary>Ver detalhes</summary><div class="hint" style="margin-top:6px">${errors.map(esc).join('<br>')}</div></details>`:'';
+    if(out)out.innerHTML=`<div class="notice ${failed?'danger':'success'}"><strong>Operação concluída.</strong><br>${deleted} produto${deleted===1?'':'s'} eliminado${deleted===1?'':'s'}${images?` · ${images} imagens apagadas do armazenamento`:''}${failed?` · ${failed} com erro`:''}.${details}</div>`;
+    toast(`${deleted} produto${deleted===1?'':'s'} eliminado${deleted===1?'':'s'}.`);
+    setTimeout(hideProgress,1000);
+  }catch(err){
+    console.error(err);if(out)out.innerHTML=`<div class="notice danger"><strong>Falha ao eliminar produtos.</strong><br>${esc(err.message||'Erro desconhecido')}</div>`;
+    showProgress('Operação interrompida',0,err.message||'Ocorreu um erro.');setTimeout(hideProgress,2500);
   }finally{buttons.forEach(b=>b.disabled=false)}
 }
 
@@ -373,11 +415,13 @@ async function invokeClientAdmin(action,clientId){
   const {data,error}=await sb.functions.invoke('admin-client-management',{body:{action,client_id:clientId}});
   if(error){
     console.error('admin-client-management',error);
-    const msg=String(error.message||'');
+    let detail='';
+    try{if(error.context?.clone){const r=await error.context.clone();const body=await r.json();detail=body?.error||''}}catch(_){}
+    const msg=String(detail||error.message||'');
     if(/failed to send a request|failed to fetch|network|fetch/i.test(msg)){
       throw new Error('Não foi possível contactar a função de administração. Confirme que a Edge Function “admin-client-management” está publicada no Supabase.');
     }
-    throw error;
+    throw new Error(msg||'Não foi possível executar a operação de administração.');
   }
   if(data?.error)throw new Error(data.error);
   return data;
@@ -430,7 +474,7 @@ async function importExcel(){const file=document.getElementById('excelFiles')?.f
 
 
 
-window.setRoute=setRoute;window.logout=logout;window.openCart=openCart;window.closeCart=closeCart;window.changeQty=changeQty;window.setQty=setQty;window.openCheckout=openCheckout;window.closeCheckout=closeCheckout;window.submitOrder=submitOrder;window.openOrders=openOrders;window.filterProducts=filterProducts;window.state=state;window.render=render;window.renderAdmin=renderAdmin;window.openProductEditor=openProductEditor;window.openProductEditorById=openProductEditorById;window.updateOrderStatus=updateOrderStatus;window.resendEmail=resendEmail;window.importExcel=importExcel;window.saveProduct=saveProduct;window.showForgotPassword=showForgotPassword;window.bulkSetProductsActive=bulkSetProductsActive;window.bulkSetProductsStock=bulkSetProductsStock;window.toggleAdminProduct=toggleAdminProduct;window.toggleAllAdminProducts=toggleAllAdminProducts;window.filterAdminProducts=filterAdminProducts;window.bulkUploadProductImages=bulkUploadProductImages;window.selectProductsWithImages=selectProductsWithImages;window.bulkDeleteProductImages=bulkDeleteProductImages;window.saveAccountProfile=saveAccountProfile;window.changeAccountPassword=changeAccountPassword;
+window.setRoute=setRoute;window.logout=logout;window.openCart=openCart;window.closeCart=closeCart;window.changeQty=changeQty;window.setQty=setQty;window.openCheckout=openCheckout;window.closeCheckout=closeCheckout;window.submitOrder=submitOrder;window.openOrders=openOrders;window.filterProducts=filterProducts;window.state=state;window.render=render;window.renderAdmin=renderAdmin;window.openProductEditor=openProductEditor;window.openProductEditorById=openProductEditorById;window.updateOrderStatus=updateOrderStatus;window.resendEmail=resendEmail;window.importExcel=importExcel;window.saveProduct=saveProduct;window.showForgotPassword=showForgotPassword;window.bulkSetProductsActive=bulkSetProductsActive;window.bulkDeleteSelectedProducts=bulkDeleteSelectedProducts;window.bulkSetProductsStock=bulkSetProductsStock;window.toggleAdminProduct=toggleAdminProduct;window.toggleAllAdminProducts=toggleAllAdminProducts;window.filterAdminProducts=filterAdminProducts;window.bulkUploadProductImages=bulkUploadProductImages;window.selectProductsWithImages=selectProductsWithImages;window.bulkDeleteProductImages=bulkDeleteProductImages;window.saveAccountProfile=saveAccountProfile;window.changeAccountPassword=changeAccountPassword;
 
 
 document.addEventListener('click',(event)=>{
@@ -470,6 +514,7 @@ document.addEventListener('click',(event)=>{
     else if(a==='bulk-active') bulkSetProductsActive(el.dataset.value==='true');
     else if(a==='select-products-with-images') selectProductsWithImages();
     else if(a==='bulk-delete-images') bulkDeleteProductImages();
+    else if(a==='bulk-delete-products') bulkDeleteSelectedProducts();
     else if(a==='preview-product-image') openProductImagePreview(el.dataset.id);
     else if(a==='close-image-preview') document.getElementById('imagePreviewModal')?.remove();
     else if(a==='close-product') document.getElementById('productModal')?.remove();

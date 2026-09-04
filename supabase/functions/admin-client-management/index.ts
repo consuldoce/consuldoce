@@ -96,6 +96,7 @@ Deno.serve(async (req) => {
 
     throw new Error('Ação não suportada')
   } catch (e) {
-    return json({ error: e instanceof Error ? e.message : String(e) }, 400)
+    console.error('admin-client-management error', e)
+    return json({ ok: false, error: e instanceof Error ? e.message : String(e) }, 200)
   }
 })

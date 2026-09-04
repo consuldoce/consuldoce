@@ -412,3 +412,7 @@ A opção de idioma está disponível também no ecrã de entrada (login, regist
 - A secção Clientes passou a ter pesquisa global, filtros individuais por Nome, NIF, Email, Telemóvel, Morada e Data de registo.
 - A ordenação pode ser feita por cada uma das colunas apresentadas na tabela.
 - Não requer alteração SQL.
+
+
+### Limite de quantidade por encomenda
+Cada referência pode ser encomendada em quantidade de 1 a 99 unidades por encomenda. O limite é aplicado no catálogo/carrinho e novamente no servidor através da função `create_order`.

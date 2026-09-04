@@ -1003,7 +1003,7 @@ begin
       v_qty := (v_item->>'quantity')::integer;
     exception when others then raise exception 'Item de encomenda inválido'; end;
     if v_qty is null or v_qty <= 0 then raise exception 'Quantidade inválida'; end if;
-    if v_qty > 100000 then raise exception 'Quantidade inválida (máximo 100000 unidades por artigo).'; end if;
+    if v_qty > 99 then raise exception 'Quantidade inválida (máximo 99 unidades por referência por encomenda).'; end if;
     select * into v_product from public.products where id=v_product_id and active=true for update;
     if not found then raise exception 'Produto indisponível'; end if;
     if not v_product.in_stock then raise exception 'Produto fora de stock: %',v_product.name; end if;

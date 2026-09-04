@@ -1,3 +1,11 @@
+CONSULDOCE — versão 65
+
+## Versão v65
+- No iOS e Android, os botões de mudança de idioma e **Sair** passam para a mesma linha do logótipo, encostados ao lado direito do cabeçalho.
+- A navegação **Catálogo / Minha conta / Carrinho / Administração** permanece na linha inferior em ecrãs móveis.
+- No desktop mantém-se o cabeçalho anterior.
+- Cache do Service Worker atualizada para evitar que a versão anterior fique presa no dispositivo.
+
 CONSULDOCE — versão 61
 
 ## Versão v51

@@ -83,18 +83,18 @@ Catálogo B2B privado da CONSULDOCE, publicado como aplicação estática no Clo
 - Finalização da encomenda através de uma função SQL atómica no Supabase.
 - A encomenda fica associada ao cliente autenticado.
 - O cliente pode consultar as suas próprias encomendas.
-- Pesquisa única do catálogo e filtros por categoria/família.
+- Pesquisa única do catálogo e filtros por categoria.
 - Filtro para mostrar apenas produtos em stock.
-- Ordenação por nome, categoria/família e **ID do produto/referência (SKU)**. Não existe ordenação por preço no catálogo público.
+- Ordenação por nome, categoria e **ID do produto/referência (SKU)**. Não existe ordenação por preço no catálogo público.
 
 ### Administração
 - Área de backoffice protegida por papel `admin`.
 - Gestão de produtos.
 - Criação e edição de produtos.
 - ID do produto/referência (SKU) em coluna própria.
-- Pesquisa única na tabela, abrangendo ID/referência, nome, família, código de barras, descrição e outros dados relevantes.
-- Ordenação da tabela por ID do produto, nome e família.
-- Filtro por família.
+- Pesquisa única na tabela, abrangendo ID/referência, nome, categoria, código de barras, descrição e outros dados relevantes.
+- Ordenação da tabela por ID do produto, nome e categoria.
+- Filtro por categoria.
 - Gestão da visibilidade dos produtos.
 - Gestão do estado comercial **Em stock / Fora de stock**, independente do stock físico.
 - Seleção múltipla de produtos.

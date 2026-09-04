@@ -154,6 +154,383 @@ as $$
 $$;
 
 -- -----------------------------------------------------------------------------
+-- Lista fechada de países (mantida sincronizada com ADDRESS_COUNTRIES em app.js)
+-- Usada para restringir profiles.country / customer_addresses.country /
+-- orders.delivery_country a valores válidos e evitar dados livres/arbitrários.
+-- -----------------------------------------------------------------------------
+create table if not exists public.countries (
+  name text primary key
+);
+grant select on public.countries to authenticated;
+
+insert into public.countries(name) values
+  ('Afeganistão'), ('Alanda'), ('Albânia'), ('Alemanha'), ('Andorra'), ('Angola'),
+  ('Anguila'), ('Antártida'), ('Antígua e Barbuda'), ('Argentina'), ('Argélia'), ('Arménia'),
+  ('Aruba'), ('Arábia Saudita'), ('Austrália'), ('Azerbaijão'), ('Baamas'), ('Bangladeche'),
+  ('Barbados'), ('Barém'), ('Belize'), ('Benim'), ('Bermudas'), ('Bielorrússia'),
+  ('Bolívia'), ('Botsuana'), ('Brasil'), ('Brunei'), ('Bulgária'), ('Burquina Faso'),
+  ('Burundi'), ('Butão'), ('Bélgica'), ('Bósnia e Herzegovina'), ('Cabo Verde'), ('Camarões'),
+  ('Camboja'), ('Canadá'), ('Catar'), ('Cazaquistão'), ('Chade'), ('Chile'),
+  ('China'), ('Chipre'), ('Chéquia'), ('Cidade do Vaticano'), ('Colômbia'), ('Comores'),
+  ('Congo-Brazzaville'), ('Congo-Kinshasa'), ('Coreia do Norte'), ('Coreia do Sul'), ('Costa Rica'), ('Croácia'),
+  ('Cuba'), ('Curaçau'), ('Côte d’Ivoire (Costa do Marfim)'), ('Dinamarca'), ('Domínica'), ('Egito'),
+  ('Emirados Árabes Unidos'), ('Equador'), ('Eritreia'), ('Eslováquia'), ('Eslovénia'), ('Espanha'),
+  ('Essuatíni'), ('Estados Unidos'), ('Estónia'), ('Etiópia'), ('Fiji'), ('Filipinas'),
+  ('Finlândia'), ('França'), ('Gabão'), ('Gana'), ('Geórgia'), ('Gibraltar'),
+  ('Granada'), ('Gronelândia'), ('Grécia'), ('Guadalupe'), ('Guame'), ('Guatemala'),
+  ('Guernesey'), ('Guiana'), ('Guiana Francesa'), ('Guiné'), ('Guiné Equatorial'), ('Guiné-Bissau'),
+  ('Gâmbia'), ('Haiti'), ('Honduras'), ('Hong Kong, RAE da China'), ('Hungria'), ('Ilha Bouvet'),
+  ('Ilha Norfolk'), ('Ilha de Man'), ('Ilha do Natal'), ('Ilhas Caimão'), ('Ilhas Cook'), ('Ilhas Falkland'),
+  ('Ilhas Faroé'), ('Ilhas Geórgia do Sul e Sandwich do Sul'), ('Ilhas Heard e McDonald'), ('Ilhas Marianas do Norte'), ('Ilhas Marshall'), ('Ilhas Menores Afastadas dos EUA'),
+  ('Ilhas Pitcairn'), ('Ilhas Salomão'), ('Ilhas Turcas e Caicos'), ('Ilhas Virgens Britânicas'), ('Ilhas Virgens dos EUA'), ('Ilhas dos Cocos (Keeling)'),
+  ('Indonésia'), ('Iraque'), ('Irlanda'), ('Irão'), ('Islândia'), ('Israel'),
+  ('Itália'), ('Iémen'), ('Jamaica'), ('Japão'), ('Jersey'), ('Jibuti'),
+  ('Jordânia'), ('Koweit'), ('Laos'), ('Lesoto'), ('Letónia'), ('Libéria'),
+  ('Listenstaine'), ('Lituânia'), ('Luxemburgo'), ('Líbano'), ('Líbia'), ('Macau, RAE da China'),
+  ('Macedónia do Norte'), ('Madagáscar'), ('Maiote'), ('Maldivas'), ('Mali'), ('Malta'),
+  ('Malásia'), ('Maláui'), ('Marrocos'), ('Martinica'), ('Mauritânia'), ('Maurícia'),
+  ('Mianmar (Birmânia)'), ('Micronésia'), ('Moldávia'), ('Mongólia'), ('Monserrate'), ('Montenegro'),
+  ('Moçambique'), ('México'), ('Mónaco'), ('Namíbia'), ('Nauru'), ('Nepal'),
+  ('Nicarágua'), ('Nigéria'), ('Niuê'), ('Noruega'), ('Nova Caledónia'), ('Nova Zelândia'),
+  ('Níger'), ('Omã'), ('Palau'), ('Panamá'), ('Papua-Nova Guiné'), ('Paquistão'),
+  ('Paraguai'), ('Países Baixos'), ('Países Baixos Caribenhos'), ('Peru'), ('Polinésia Francesa'), ('Polónia'),
+  ('Porto Rico'), ('Portugal'), ('Quirguistão'), ('Quiribáti'), ('Quénia'), ('Reino Unido'),
+  ('República Centro-Africana'), ('República Dominicana'), ('Reunião'), ('Roménia'), ('Ruanda'), ('Rússia'),
+  ('Salvador'), ('Samoa'), ('Samoa Americana'), ('Santa Helena'), ('Santa Lúcia'), ('Sara Ocidental'),
+  ('Seicheles'), ('Senegal'), ('Serra Leoa'), ('Singapura'), ('Somália'), ('Sri Lanca'),
+  ('Sudão'), ('Sudão do Sul'), ('Suriname'), ('Suécia'), ('Suíça'), ('Svalbard e Jan Mayen'),
+  ('São Bartolomeu'), ('São Cristóvão e Neves'), ('São Marinho'), ('São Martinho (Saint-Martin)'), ('São Martinho (Sint Maarten)'), ('São Pedro e Miquelão'),
+  ('São Tomé e Príncipe'), ('São Vicente e Granadinas'), ('Sérvia'), ('Síria'), ('Tailândia'), ('Taiwan'),
+  ('Tajiquistão'), ('Tanzânia'), ('Território Britânico do Oceano Índico'), ('Territórios Austrais Franceses'), ('Territórios palestinianos'), ('Timor-Leste'),
+  ('Togo'), ('Tonga'), ('Toquelau'), ('Trindade e Tobago'), ('Tunísia'), ('Turquemenistão'),
+  ('Turquia'), ('Tuvalu'), ('Ucrânia'), ('Uganda'), ('Uruguai'), ('Usbequistão'),
+  ('Vanuatu'), ('Venezuela'), ('Vietname'), ('Wallis e Futuna'), ('Zimbabué'), ('Zâmbia'),
+  ('África do Sul'), ('Áustria'), ('Índia')
+on conflict (name) do nothing;
+
+-- -----------------------------------------------------------------------------
+-- Validação de NIF / número de identificação fiscal por país (servidor)
+-- Espelha a lógica client-side em app.js. Isto é uma segunda linha de defesa:
+-- a validação nunca deve depender só do browser, porque qualquer pessoa pode
+-- chamar a API REST/RPC do Supabase diretamente com a chave publishable.
+-- Algoritmos oficiais de dígito de controlo onde documentados publicamente;
+-- para os restantes países aplica-se uma validação de formato.
+-- -----------------------------------------------------------------------------
+create or replace function public.normalize_tax_id(v text)
+returns text language sql immutable as $$
+  select upper(regexp_replace(coalesce(v,''), '[^0-9A-Za-z]', '', 'g'));
+$$;
+
+create or replace function public.normalize_nif_digits(v text)
+returns text language sql immutable as $$
+  select regexp_replace(coalesce(v,''), '[^0-9]', '', 'g');
+$$;
+
+create or replace function public.is_valid_mod11_nif9(value text)
+returns boolean language plpgsql immutable as $$
+declare
+  nif text := public.normalize_nif_digits(value);
+  i int; sum int := 0; remainder int; check_digit int;
+  weights int[] := array[9,8,7,6,5,4,3,2];
+begin
+  if length(nif) <> 9 then return false; end if;
+  if nif !~ '^[1-9][0-9]{8}$' then return false; end if;
+  if nif ~ '^(\d)\1{8}$' then return false; end if;
+  for i in 1..8 loop
+    sum := sum + (substr(nif,i,1)::int) * weights[i];
+  end loop;
+  remainder := sum % 11;
+  check_digit := case when remainder < 2 then 0 else 11-remainder end;
+  return check_digit = substr(nif,9,1)::int;
+end;
+$$;
+
+create or replace function public.is_valid_spanish_nif(value text)
+returns boolean language plpgsql immutable as $$
+declare
+  v text := public.normalize_tax_id(value);
+  letters text := 'TRWAGMYFPDXBNJZSQVHLCKE';
+  num bigint; map_char char(1);
+  letter char(1); digits text; control text;
+  i int; d int; n int; sum_odd int := 0; sum_even int := 0; total int; unit int;
+  control_digit int; control_letter char(1);
+begin
+  if v ~ '^[0-9]{8}[A-Z]$' then
+    num := substr(v,1,8)::bigint;
+    return substr(v,9,1) = substr(letters, (num % 23)::int + 1, 1);
+  end if;
+  if v ~ '^[XYZ][0-9]{7}[A-Z]$' then
+    map_char := case substr(v,1,1) when 'X' then '0' when 'Y' then '1' else '2' end;
+    num := (map_char || substr(v,2,7))::bigint;
+    return substr(v,9,1) = substr(letters, (num % 23)::int + 1, 1);
+  end if;
+  if v ~ '^[ABCDEFGHJKLMNPQRSUVW][0-9]{7}[0-9A-J]$' then
+    letter := substr(v,1,1);
+    digits := substr(v,2,7);
+    control := substr(v,9,1);
+    for i in 1..7 loop
+      d := substr(digits,i,1)::int;
+      if i % 2 = 1 then
+        n := d*2; if n>9 then n := n-9; end if;
+        sum_odd := sum_odd + n;
+      else
+        sum_even := sum_even + d;
+      end if;
+    end loop;
+    total := sum_odd + sum_even;
+    unit := total % 10;
+    control_digit := case when unit=0 then 0 else 10-unit end;
+    control_letter := substr('JABCDEFGHI', control_digit+1, 1);
+    if letter in ('N','P','Q','R','S','W') then
+      return control = control_letter;
+    elsif letter in ('A','B','E','H') then
+      return control = control_digit::text;
+    else
+      return control = control_digit::text or control = control_letter;
+    end if;
+  end if;
+  return false;
+end;
+$$;
+
+create or replace function public.is_valid_french_nif(value text)
+returns boolean language plpgsql immutable as $$
+declare
+  v text := public.normalize_tax_id(value);
+  key text; siren text; expected int;
+begin
+  if v !~ '^[0-9A-Z]{2}[0-9]{9}$' then return false; end if;
+  key := substr(v,1,2);
+  siren := substr(v,3,9);
+  if key ~ '^[0-9]{2}$' then
+    expected := ((12 + 3*(siren::bigint % 97)) % 97)::int;
+    return key::int = expected;
+  end if;
+  return true;
+end;
+$$;
+
+create or replace function public.is_valid_italian_partita_iva(value text)
+returns boolean language plpgsql immutable as $$
+declare
+  v text := public.normalize_nif_digits(value);
+  i int; d int; sum int := 0;
+begin
+  if length(v) <> 11 then return false; end if;
+  for i in 0..9 loop
+    d := substr(v, i+1, 1)::int;
+    if i % 2 = 1 then
+      d := d*2; if d>9 then d := d-9; end if;
+    end if;
+    sum := sum + d;
+  end loop;
+  return ((10 - (sum % 10)) % 10) = substr(v,11,1)::int;
+end;
+$$;
+
+create or replace function public.is_valid_german_vat(value text)
+returns boolean language plpgsql immutable as $$
+declare
+  v text := public.normalize_nif_digits(value);
+  i int; product int := 10; sum int; check_digit int;
+begin
+  if length(v) <> 9 then return false; end if;
+  for i in 0..7 loop
+    sum := (substr(v,i+1,1)::int + product) % 10;
+    if sum = 0 then sum := 10; end if;
+    product := (2*sum) % 11;
+  end loop;
+  check_digit := (11-product) % 10;
+  return check_digit = substr(v,9,1)::int;
+end;
+$$;
+
+create or replace function public.is_valid_uk_vat(value text)
+returns boolean language plpgsql immutable as $$
+declare
+  raw text := upper(trim(coalesce(value,'')));
+  v text := public.normalize_nif_digits(value);
+  weights int[] := array[8,7,6,5,4,3,2];
+  i int; sum int; chk int; total int;
+begin
+  if raw ~ '^(GD|HA)[0-9]{3}$' then return true; end if;
+  if length(v) = 12 then v := substr(v,1,9); end if;
+  if length(v) <> 9 then return false; end if;
+  sum := 0;
+  for i in 1..7 loop
+    sum := sum + substr(v,i,1)::int * weights[i];
+  end loop;
+  chk := substr(v,8,2)::int;
+  total := sum+chk;
+  if total % 97 = 0 then return true; end if;
+  total := sum+chk-55;
+  return total % 97 = 0;
+end;
+$$;
+
+create or replace function public.is_valid_dutch_vat(value text)
+returns boolean language plpgsql immutable as $$
+declare
+  v text := public.normalize_tax_id(value);
+  digits text;
+  weights int[] := array[9,8,7,6,5,4,3,2];
+  i int; sum int := 0;
+begin
+  if v ~ '^[0-9]{9}B[0-9]{2}$' then
+    digits := substr(v,1,9);
+  elsif v ~ '^[0-9]{9}$' then
+    digits := v;
+  else
+    return false;
+  end if;
+  for i in 1..8 loop
+    sum := sum + substr(digits,i,1)::int * weights[i];
+  end loop;
+  return (sum % 11) = substr(digits,9,1)::int;
+end;
+$$;
+
+create or replace function public.is_valid_belgian_vat(value text)
+returns boolean language plpgsql immutable as $$
+declare
+  v text := public.normalize_nif_digits(value);
+  base int; chk int;
+begin
+  if length(v) = 9 then v := '0' || v; end if;
+  if length(v) <> 10 then return false; end if;
+  if substr(v,1,1) not in ('0','1') then return false; end if;
+  base := substr(v,1,8)::int;
+  chk := substr(v,9,2)::int;
+  return (97 - (base % 97)) = chk;
+end;
+$$;
+
+create or replace function public.cnpj_check_digit(base text)
+returns int language plpgsql immutable as $$
+declare
+  weights int[];
+  i int; sum int := 0; r int;
+begin
+  if length(base) = 12 then
+    weights := array[5,4,3,2,9,8,7,6,5,4,3,2];
+  else
+    weights := array[6,5,4,3,2,9,8,7,6,5,4,3,2];
+  end if;
+  for i in 1..length(base) loop
+    sum := sum + substr(base,i,1)::int * weights[i];
+  end loop;
+  r := sum % 11;
+  return case when r<2 then 0 else 11-r end;
+end;
+$$;
+
+create or replace function public.is_valid_cpf(v text)
+returns boolean language plpgsql immutable as $$
+declare
+  i int; sum int; d1 int; d2 int;
+begin
+  if length(v) <> 11 or v ~ '^(\d)\1{10}$' then return false; end if;
+  sum := 0;
+  for i in 0..8 loop
+    sum := sum + substr(v,i+1,1)::int * (10-i);
+  end loop;
+  d1 := (sum*10) % 11; if d1=10 then d1:=0; end if;
+  if d1 <> substr(v,10,1)::int then return false; end if;
+  sum := 0;
+  for i in 0..9 loop
+    sum := sum + substr(v,i+1,1)::int * (11-i);
+  end loop;
+  d2 := (sum*10) % 11; if d2=10 then d2:=0; end if;
+  return d2 = substr(v,11,1)::int;
+end;
+$$;
+
+create or replace function public.is_valid_cnpj(v text)
+returns boolean language plpgsql immutable as $$
+begin
+  if length(v) <> 14 or v ~ '^(\d)\1{13}$' then return false; end if;
+  if public.cnpj_check_digit(substr(v,1,12)) <> substr(v,13,1)::int then return false; end if;
+  return public.cnpj_check_digit(substr(v,1,13)) = substr(v,14,1)::int;
+end;
+$$;
+
+create or replace function public.is_valid_brazilian_nif(value text)
+returns boolean language plpgsql immutable as $$
+declare v text := public.normalize_nif_digits(value);
+begin
+  if length(v) = 11 then return public.is_valid_cpf(v); end if;
+  if length(v) = 14 then return public.is_valid_cnpj(v); end if;
+  return false;
+end;
+$$;
+
+create or replace function public.is_valid_generic_tax_id(value text)
+returns boolean language sql immutable as $$
+  select length(public.normalize_tax_id(value)) between 5 and 20
+     and public.normalize_tax_id(value) ~ '[0-9]';
+$$;
+
+-- Despachante: escolhe a regra pelo nome do país (mesmos nomes usados em ADDRESS_COUNTRIES).
+create or replace function public.is_valid_nif_for_country(value text, country text)
+returns boolean language plpgsql immutable as $$
+declare c text := trim(coalesce(country,''));
+begin
+  if trim(coalesce(value,'')) = '' then return false; end if;
+  if c = 'Portugal' then return public.is_valid_mod11_nif9(value);
+  elsif c = 'Cabo Verde' then return public.is_valid_mod11_nif9(value);
+  elsif c = 'Espanha' then return public.is_valid_spanish_nif(value);
+  elsif c = 'França' then return public.is_valid_french_nif(value);
+  elsif c = 'Itália' then return public.is_valid_italian_partita_iva(value);
+  elsif c = 'Alemanha' then return public.is_valid_german_vat(value);
+  elsif c = 'Reino Unido' then return public.is_valid_uk_vat(value);
+  elsif c = 'Países Baixos' then return public.is_valid_dutch_vat(value);
+  elsif c = 'Bélgica' then return public.is_valid_belgian_vat(value);
+  elsif c = 'Brasil' then return public.is_valid_brazilian_nif(value);
+  else return public.is_valid_generic_tax_id(value);
+  end if;
+end;
+$$;
+
+-- -----------------------------------------------------------------------------
+-- Robustez de dados: limites de tamanho e país como lista fechada.
+-- O maxlength do formulário HTML é só uma conveniência de UX — qualquer
+-- chamada direta à API REST podia até aqui submeter strings arbitrariamente
+-- grandes ou um país inventado. Isto aplica os mesmos limites do lado do
+-- servidor, independentemente de como o pedido chega.
+-- -----------------------------------------------------------------------------
+alter table public.profiles drop constraint if exists profiles_full_name_len_chk;
+alter table public.profiles add constraint profiles_full_name_len_chk check (char_length(full_name) <= 200);
+alter table public.profiles drop constraint if exists profiles_nif_len_chk;
+alter table public.profiles add constraint profiles_nif_len_chk check (char_length(nif) <= 20);
+alter table public.profiles drop constraint if exists profiles_phone_number_len_chk;
+alter table public.profiles add constraint profiles_phone_number_len_chk check (char_length(phone_number) <= 30);
+alter table public.profiles drop constraint if exists profiles_phone_country_code_len_chk;
+alter table public.profiles add constraint profiles_phone_country_code_len_chk check (char_length(phone_country_code) <= 10);
+alter table public.profiles drop constraint if exists profiles_address_line1_len_chk;
+alter table public.profiles add constraint profiles_address_line1_len_chk check (char_length(address_line1) <= 250);
+alter table public.profiles drop constraint if exists profiles_address_line2_len_chk;
+alter table public.profiles add constraint profiles_address_line2_len_chk check (char_length(address_line2) <= 150);
+alter table public.profiles drop constraint if exists profiles_postal_code_len_chk;
+alter table public.profiles add constraint profiles_postal_code_len_chk check (char_length(postal_code) <= 20);
+alter table public.profiles drop constraint if exists profiles_postal_locality_len_chk;
+alter table public.profiles add constraint profiles_postal_locality_len_chk check (char_length(postal_locality) <= 120);
+alter table public.profiles drop constraint if exists profiles_country_fkey;
+alter table public.profiles add constraint profiles_country_fkey foreign key (country) references public.countries(name);
+
+alter table public.products drop constraint if exists products_name_len_chk;
+alter table public.products add constraint products_name_len_chk check (char_length(name) <= 200);
+alter table public.products drop constraint if exists products_sku_len_chk;
+alter table public.products add constraint products_sku_len_chk check (char_length(sku) <= 60);
+alter table public.products drop constraint if exists products_short_description_len_chk;
+alter table public.products add constraint products_short_description_len_chk check (short_description is null or char_length(short_description) <= 500);
+alter table public.products drop constraint if exists products_category_len_chk;
+alter table public.products add constraint products_category_len_chk check (category is null or char_length(category) <= 120);
+alter table public.products drop constraint if exists products_barcode_len_chk;
+alter table public.products add constraint products_barcode_len_chk check (barcode is null or char_length(barcode) <= 60);
+alter table public.products drop constraint if exists products_unit_len_chk;
+alter table public.products add constraint products_unit_len_chk check (char_length(unit) <= 20);
+
+-- -----------------------------------------------------------------------------
 -- Customer addresses
 -- A client may have multiple delivery addresses, with exactly one preferred
 -- address whenever at least one address exists. Orders store a snapshot so
@@ -293,6 +670,40 @@ create table if not exists public.order_items (
 create index if not exists orders_client_created_idx on public.orders(client_id, created_at desc);
 create index if not exists order_items_order_idx on public.order_items(order_id);
 
+alter table public.customer_addresses drop constraint if exists customer_addresses_label_len_chk;
+alter table public.customer_addresses add constraint customer_addresses_label_len_chk check (char_length(label) <= 100);
+alter table public.customer_addresses drop constraint if exists customer_addresses_address_line1_len_chk;
+alter table public.customer_addresses add constraint customer_addresses_address_line1_len_chk check (char_length(address_line1) <= 250);
+alter table public.customer_addresses drop constraint if exists customer_addresses_address_line2_len_chk;
+alter table public.customer_addresses add constraint customer_addresses_address_line2_len_chk check (char_length(address_line2) <= 150);
+alter table public.customer_addresses drop constraint if exists customer_addresses_postal_code_len_chk;
+alter table public.customer_addresses add constraint customer_addresses_postal_code_len_chk check (char_length(postal_code) <= 20);
+alter table public.customer_addresses drop constraint if exists customer_addresses_postal_locality_len_chk;
+alter table public.customer_addresses add constraint customer_addresses_postal_locality_len_chk check (char_length(postal_locality) <= 120);
+alter table public.customer_addresses drop constraint if exists customer_addresses_country_fkey;
+alter table public.customer_addresses add constraint customer_addresses_country_fkey foreign key (country) references public.countries(name);
+
+alter table public.orders drop constraint if exists orders_notes_len_chk;
+alter table public.orders add constraint orders_notes_len_chk check (notes is null or char_length(notes) <= 1000);
+alter table public.orders drop constraint if exists orders_delivery_address_label_len_chk;
+alter table public.orders add constraint orders_delivery_address_label_len_chk check (char_length(delivery_address_label) <= 100);
+alter table public.orders drop constraint if exists orders_delivery_address_line1_len_chk;
+alter table public.orders add constraint orders_delivery_address_line1_len_chk check (char_length(delivery_address_line1) <= 250);
+alter table public.orders drop constraint if exists orders_delivery_address_line2_len_chk;
+alter table public.orders add constraint orders_delivery_address_line2_len_chk check (char_length(delivery_address_line2) <= 150);
+alter table public.orders drop constraint if exists orders_delivery_postal_code_len_chk;
+alter table public.orders add constraint orders_delivery_postal_code_len_chk check (char_length(delivery_postal_code) <= 20);
+alter table public.orders drop constraint if exists orders_delivery_postal_locality_len_chk;
+alter table public.orders add constraint orders_delivery_postal_locality_len_chk check (char_length(delivery_postal_locality) <= 120);
+alter table public.orders drop constraint if exists orders_delivery_country_fkey;
+alter table public.orders add constraint orders_delivery_country_fkey foreign key (delivery_country) references public.countries(name);
+
+-- Limite superior de quantidade por artigo, para evitar encomendas absurdas
+-- (por engano ou abuso) — o limite "amigável" com mensagem clara está também
+-- aplicado dentro de create_order() mais abaixo.
+alter table public.order_items drop constraint if exists order_items_quantity_max_chk;
+alter table public.order_items add constraint order_items_quantity_max_chk check (quantity <= 100000);
+
 
 
 -- Creates the application profile when Supabase Auth creates a user.
@@ -362,8 +773,11 @@ create trigger on_auth_user_created
 after insert on auth.users
 for each row execute function public.handle_new_user();
 
--- Registration rules: NIF is mandatory for client profiles, but its formal
--- Portuguese check-digit validation is intentionally disabled for now.
+-- Registration rules: NIF is mandatory for client profiles and is validated
+-- server-side against the official check-digit rule for the profile's country
+-- (see is_valid_nif_for_country above). This is a second line of defense:
+-- the client-side validation in app.js is for UX only, and must never be the
+-- only gate, since anyone can call the Supabase REST/RPC API directly.
 -- Duplicate NIF/email values are prevented by unique indexes below.
 create or replace function public.validate_profile_registration()
 returns trigger
@@ -374,13 +788,19 @@ as $$
 begin
   new.email := lower(trim(coalesce(new.email,'')));
   new.nif := regexp_replace(upper(coalesce(new.nif,'')),'[^0-9A-Z]','','g');
+  new.country := coalesce(nullif(trim(new.country),''), 'Portugal');
 
   if new.email = '' then
     raise exception 'Email obrigatório';
   end if;
 
-  if new.role = 'client' and new.nif = '' then
-    raise exception 'NIF obrigatório';
+  if new.role = 'client' then
+    if new.nif = '' then
+      raise exception 'NIF obrigatório';
+    end if;
+    if not public.is_valid_nif_for_country(new.nif, new.country) then
+      raise exception 'NIF inválido para o país indicado (%).', new.country;
+    end if;
   end if;
 
   -- Prevent a normal authenticated user from promoting their own profile.
@@ -396,7 +816,7 @@ $$;
 
 drop trigger if exists profiles_validate_registration on public.profiles;
 create trigger profiles_validate_registration
-before insert or update of email, nif, role on public.profiles
+before insert or update of email, nif, role, country on public.profiles
 for each row execute function public.validate_profile_registration();
 
 create unique index if not exists profiles_nif_unique_idx
@@ -432,11 +852,15 @@ on public.profiles for update to authenticated
 using (id = auth.uid() or public.is_admin())
 with check (id = auth.uid() or public.is_admin());
 
+-- Nota de segurança: não é criada uma política "profiles_admin_all" com FOR ALL.
+-- profiles_select e profiles_update acima já cobrem tudo o que o admin precisa
+-- (ver perfis de clientes, editar o seu próprio). Uma política FOR ALL também
+-- concederia DELETE/INSERT ao admin via API, o que nunca é necessário aqui —
+-- a criação de perfis é feita apenas pelo trigger SECURITY DEFINER
+-- handle_new_user(), que ignora RLS — e apagar um perfil diretamente deixaria
+-- o utilizador em auth.users "órfão" (sem perfil). Se uma limpeza manual for
+-- mesmo necessária, deve ser feita a partir do painel do Supabase.
 drop policy if exists profiles_admin_all on public.profiles;
-create policy profiles_admin_all
-on public.profiles for all to authenticated
-using (public.is_admin())
-with check (public.is_admin());
 
 alter table public.products enable row level security;
 
@@ -522,6 +946,7 @@ begin
       v_qty := (v_item->>'quantity')::integer;
     exception when others then raise exception 'Item de encomenda inválido'; end;
     if v_qty is null or v_qty <= 0 then raise exception 'Quantidade inválida'; end if;
+    if v_qty > 100000 then raise exception 'Quantidade inválida (máximo 100000 unidades por artigo).'; end if;
     select * into v_product from public.products where id=v_product_id and active=true for update;
     if not found then raise exception 'Produto indisponível'; end if;
     if not v_product.in_stock then raise exception 'Produto fora de stock: %',v_product.name; end if;

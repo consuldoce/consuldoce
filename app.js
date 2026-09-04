@@ -357,7 +357,7 @@ function adminImport(c){c.innerHTML=`<div class="panel"><h2 class="panel-title">
 
 let __xlsxPromise=null;
 
-function loadXLSX(){if(window.XLSX)return Promise.resolve(window.XLSX);if(__xlsxPromise)return __xlsxPromise;__xlsxPromise=new Promise((resolve,reject)=>{const urls=['https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js','https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js'];let i=0;const next=()=>{if(window.XLSX)return resolve(window.XLSX);if(i>=urls.length)return reject(new Error('Não foi possível carregar o leitor Excel. Verifique a ligação à Internet ou recarregue a página.'));const script=document.createElement('script');script.src=urls[i++];script.onload=()=>window.XLSX?resolve(window.XLSX):next();script.onerror=next;document.head.appendChild(script)};next()});return __xlsxPromise}
+function loadXLSX(){if(window.XLSX)return Promise.resolve(window.XLSX);if(__xlsxPromise)return __xlsxPromise;__xlsxPromise=new Promise((resolve,reject)=>{const script=document.createElement('script');script.src='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';script.crossOrigin='anonymous';script.onload=()=>window.XLSX?resolve(window.XLSX):reject(new Error('Não foi possível carregar o leitor Excel. Verifique a ligação à Internet ou recarregue a página.'));script.onerror=()=>reject(new Error('Não foi possível carregar o leitor Excel. Verifique a ligação à Internet ou recarregue a página.'));document.head.appendChild(script)});return __xlsxPromise}
 
 function normKey(k){return String(k??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[\s_\-./]+/g,'').toLowerCase()}
 

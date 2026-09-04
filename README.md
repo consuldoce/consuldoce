@@ -379,3 +379,8 @@ A `service_role` nunca deve ser colocada em `config.js` nem no browser.
 - A função `admin-client-management` valida a sessão e as permissões no servidor.
 - Para uma instalação existente, executar o delta SQL V37→V38 antes de utilizar a administração.
 - Publicar novamente a Edge Function `admin-client-management` no projeto Supabase.
+
+
+### V40 — eliminação de contas
+- Corrigido o trigger das moradas para permitir a eliminação em cascata de uma conta de cliente.
+- A regra de manter uma morada predefinida continua válida para eliminações normais feitas pelo cliente; deixa de bloquear a eliminação da conta.

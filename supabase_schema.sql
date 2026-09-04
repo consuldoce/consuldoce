@@ -587,7 +587,12 @@ for each row execute function public.customer_addresses_default_guard();
 create or replace function public.customer_addresses_before_delete()
 returns trigger language plpgsql security definer set search_path=public as $$
 begin
-  if old.is_default and not exists(select 1 from public.customer_addresses where client_id=old.client_id and id<>old.id) then
+  -- During account deletion PostgreSQL cascades the profile delete into
+  -- customer_addresses. At that point the parent profile no longer exists,
+  -- so the normal rule requiring one default address must not block the cascade.
+  if old.is_default
+     and exists(select 1 from public.profiles p where p.id=old.client_id)
+     and not exists(select 1 from public.customer_addresses where client_id=old.client_id and id<>old.id) then
     raise exception 'A conta tem de ter uma morada predefinida.';
   end if;
   return old;

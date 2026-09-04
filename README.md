@@ -341,7 +341,7 @@ O pedido de recuperação usa um `redirectTo` explícito para a mesma origem com
 
 A inicialização do cliente Supabase é feita de forma protegida, evitando que uma falha na criação do cliente deixe a aplicação num ecrã branco. O versionamento de cache do Service Worker também foi incrementado para v27.
 
-## V36 — gestão de clientes e contas
+## V37 — gestão de clientes e contas
 - A lista de países do registo/conta/moradas passou a um campo pesquisável com lista de sugestões, evitando o menu nativo excessivamente alto em alguns browsers.
 - O registo concluído mostra uma página própria a confirmar que a conta foi criada e que é necessário confirmar o email para concluir a ativação. Ao sair desse ecrã, o formulário é descartado.
 - O NIF continua protegido por unicidade server-side através do índice único existente.
@@ -351,7 +351,7 @@ A inicialização do cliente Supabase é feita de forma protegida, evitando que 
 - Foi adicionada a Edge Function `admin-client-management`. Esta função usa `SUPABASE_SERVICE_ROLE_KEY` exclusivamente no servidor e valida que o utilizador que chama a função é administrador.
 
 ### Edge Function adicional
-Depois de instalar V36, fazer deploy de `supabase/functions/admin-client-management/index.ts` no projeto Supabase e garantir os secrets da função:
+Depois de instalar V37, fazer deploy de `supabase/functions/admin-client-management/index.ts` no projeto Supabase e garantir os secrets da função:
 - `SUPABASE_URL`
 - `SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
@@ -359,8 +359,14 @@ Depois de instalar V36, fazer deploy de `supabase/functions/admin-client-managem
 A `service_role` nunca deve ser colocada em `config.js` nem no browser.
 
 
-## V36 — Gestão de contas
+## V37 — Gestão de contas
 - O cliente autenticado pode pedir um email de redefinição de palavra-passe e eliminar a própria conta.
 - O administrador pode eliminar contas de clientes e fazer reset de palavra-passe de clientes.
 - Contas de administrador não podem ser eliminadas ou ter a palavra-passe gerida através desta função.
 - A eliminação preserva o histórico das encomendas através dos snapshots comerciais.
+
+
+## V37 — correção de compatibilidade da gestão de contas
+- Compatibilidade com bases existentes: adiciona `profiles.must_change_password` se ainda não existir.
+- Garante índices únicos para NIF e email normalizado.
+- A validação server-side apresenta mensagens claras quando NIF ou email já existem.

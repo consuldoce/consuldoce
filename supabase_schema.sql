@@ -37,6 +37,9 @@ create table if not exists public.profiles (
   created_at timestamptz not null default now()
 );
 
+-- Compatibility for existing databases created before this column was introduced.
+alter table public.profiles add column if not exists must_change_password boolean not null default false;
+
 -- -----------------------------------------------------------------------------
 -- Catalogue
 -- sku is the human-facing product ID/reference imported from Sage.
@@ -816,6 +819,24 @@ begin
     if not public.is_valid_nif_for_country(new.nif, new.country) then
       raise exception 'NIF inválido para o país indicado (%).', new.country;
     end if;
+
+    -- Friendly server-side duplicate checks. The unique indexes below remain
+    -- the final race-safe protection against concurrent inserts.
+    if exists (
+      select 1 from public.profiles p
+      where p.nif = new.nif
+        and p.id is distinct from new.id
+    ) then
+      raise exception 'Já existe um cliente registado com este NIF.';
+    end if;
+  end if;
+
+  if exists (
+    select 1 from public.profiles p
+    where lower(trim(coalesce(p.email,''))) = new.email
+      and p.id is distinct from new.id
+  ) then
+    raise exception 'Já existe uma conta registada com este email.';
   end if;
 
   -- Prevent a normal authenticated user from promoting their own profile.

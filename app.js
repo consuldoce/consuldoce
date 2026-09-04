@@ -118,9 +118,16 @@ async function doAuth(e){
 
       if(error){
         const m=String(error.message||'');
-        if(/duplicate|unique|already registered|already exists|profiles_nif/i.test(m))
-          throw new Error('Já existe um cliente registado com este NIF ou email.');
+        if(/duplicate|unique|already registered|already exists|profiles_nif|profiles_email|email.*exist|nif.*exist/i.test(m) || error.code==='23505')
+          throw new Error(/nif/i.test(m) ? 'Já existe um cliente registado com este NIF.' : 'Já existe uma conta registada com este email.');
         throw error;
+      }
+
+      // Supabase may intentionally avoid revealing whether an email exists.
+      // When that protection returns an empty identities array, do not proceed
+      // as if a new account had been created.
+      if(data?.user && Array.isArray(data.user.identities) && data.user.identities.length===0){
+        throw new Error('Já existe uma conta registada com este email.');
       }
 
       if(!data.session){

@@ -1,11 +1,4 @@
-## Versão v52
-
-### v52 — filtros nas encomendas e clientes
-- As listas de **Encomendas** e **Clientes** na Administração passam a ter pesquisa, filtros e ordenação, seguindo o mesmo padrão das restantes listas administrativas.
-- Encomendas: pesquisa por cliente, NIF, email, ID ou produto; filtro por estado; ordenação por data, cliente ou estado.
-- Clientes: pesquisa por nome, NIF, email, telefone ou morada; filtro por país; ordenação por nome, NIF, email ou data de registo.
-- As ações existentes (alteração de estado, reenvio de email, histórico, reset de password e eliminação) mantêm-se disponíveis.
-- Não é necessária nova migration SQL para esta versão.
+## Versão v51
 - Administração: separador **Importar dados** concentra importação Sage 50 e carregamento de fotografias em lote.
 - A página Produtos mantém as ações de seleção/gestão sem o carregamento de imagens.
 - A barra de ações dos produtos permanece numa única linha no desktop, com rolagem horizontal apenas quando necessário em ecrãs mais estreitos.

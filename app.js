@@ -71,28 +71,24 @@ async function setLanguage(lang){
   localStorage.setItem('consuldoce_language',state.language);
   document.documentElement.lang=state.language==='zh-CN'?'zh-CN':'pt-PT';
 
-  // Na entrada/login não devemos esperar pelo Supabase nem voltar a renderizar a
-  // página: isso fazia o clique parecer não funcionar enquanto a consulta de
-  // países/sessão ainda estava pendente. A tradução local é instantânea.
-  // Atualizar o próprio botão sem reconstruir a página. Isto é especialmente
-  // importante no login/registo: aqui não queremos esperar por Supabase.
+  // O idioma é uma preferência local. Primeiro reconstruímos o ecrã com o
+  // idioma escolhido e só depois executamos a tradução dos textos dinâmicos.
+  // Assim evitamos que o tradutor observe/renderize a página antiga durante a
+  // troca de idioma, problema que afetava as páginas autenticadas.
+  if(!state.session){
+    app.innerHTML=auth();
+    document.getElementById('authForm')?.addEventListener('submit',doAuth);
+  }else{
+    try { await render(); } catch(e) { console.error(e); }
+  }
+
+  // Atualiza o botão e todos os textos depois de o DOM final existir.
   document.querySelectorAll('[data-language-button]').forEach(btn=>{
     btn.textContent=state.language==='zh-CN'?'PT':'中文';
     btn.title=state.language==='zh-CN'?'切换到葡萄牙语':'Traduzir para mandarim';
   });
+  window.CONSULDOCE_I18N?.translatePage();
   window.dispatchEvent(new CustomEvent('consuldoce-language-change',{detail:{language:state.language}}));
-  window.CONSULDOCE_I18N?.translatePage();
-
-  if(!state.session){
-    // O ecrã de autenticação é renderizado diretamente no idioma escolhido.
-    // Não dependemos do tradutor genérico nem de chamadas de rede para o login.
-    app.innerHTML=auth();
-    document.getElementById('authForm')?.addEventListener('submit',doAuth);
-    return;
-  }
-
-  try { await render(); } catch(e) { console.error(e); }
-  window.CONSULDOCE_I18N?.translatePage();
   requestAnimationFrame(()=>window.CONSULDOCE_I18N?.translatePage());
 }
 function toggleLanguage(){return setLanguage(state.language==='zh-CN'?'pt':'zh-CN')}
@@ -217,7 +213,7 @@ async function doAuth(e){
 async function logout(){await sb?.auth.signOut();state.session=null;state.profile=null;setRoute('#/login')}
 
 function isRecoveryLocation(){const path=String(location.pathname||'').replace(/\/+$/,'')||'/';const query=new URLSearchParams(location.search);const hash=location.hash.startsWith('#')?location.hash.slice(1):location.hash;const hashParams=new URLSearchParams(hash);return path==='/recovery'||query.get('recovery')==='1'||query.get('type')==='recovery'||hashParams.get('type')==='recovery'||location.hash.includes('access_token=')||location.hash.includes('refresh_token=')}
-async function loadSession(){if(!sb){state.route='#/login';return}if(isRecoveryLocation())state.recoveryFlow=true;if(state.recoveryFlow)state.authMode='recovery';const applySession=async(event,s)=>{const recovery=state.recoveryFlow||event==='PASSWORD_RECOVERY';if(recovery){state.authMode='recovery';state.session=s||state.session;state.profile=null;state.route='#/reset-password';render();return}state.session=s;if(s){await loadProfile();if(state.profile?.must_change_password){state.route='#/force-password'}else if(state.route==='#/login'||state.route==='#/reset-password')state.route='#/catalog'}else{state.profile=null;state.route='#/login'}render()};sb.auth.onAuthStateChange((event,s)=>{setTimeout(()=>applySession(event,s),0)});const {data}=await sb.auth.getSession();await applySession('INITIAL_SESSION',data.session)}
+async function loadSession(){if(!sb){state.route='#/login';return}if(isRecoveryLocation())state.recoveryFlow=true;if(state.recoveryFlow)state.authMode='recovery';const applySession=async(event,s)=>{state.language=localStorage.getItem('consuldoce_language')==='zh-CN'?'zh-CN':'pt';document.documentElement.lang=state.language==='zh-CN'?'zh-CN':'pt-PT';const recovery=state.recoveryFlow||event==='PASSWORD_RECOVERY';if(recovery){state.authMode='recovery';state.session=s||state.session;state.profile=null;state.route='#/reset-password';render();return}state.session=s;if(s){await loadProfile();if(state.profile?.must_change_password){state.route='#/force-password'}else if(state.route==='#/login'||state.route==='#/reset-password')state.route='#/catalog'}else{state.profile=null;state.route='#/login'}render()};sb.auth.onAuthStateChange((event,s)=>{setTimeout(()=>applySession(event,s),0)});const {data}=await sb.auth.getSession();await applySession('INITIAL_SESSION',data.session)}
 async function loadProfile(){const {data,error}=await sb.from('profiles').select('*').eq('id',state.session.user.id).single();if(!error){state.profile=data;const authEmail=String(state.session.user.email||'').trim().toLowerCase();if(authEmail&&authEmail!==String(data.email||'').trim().toLowerCase()){const {data:updated}=await sb.from('profiles').update({email:authEmail}).eq('id',state.session.user.id).select('*').single();if(updated)state.profile=updated}}else state.profile={id:state.session.user.id,email:state.session.user.email,role:'client'};await loadAddresses()}
 async function loadAddresses(){if(!sb||!state.session){state.addresses=[];return}const {data,error}=await sb.from('customer_addresses').select('id,label,address_line1,address_line2,postal_code,postal_locality,country,is_default,created_at,updated_at').eq('client_id',state.session.user.id).order('is_default',{ascending:false}).order('created_at',{ascending:true});if(error){console.error('loadAddresses',error);state.addresses=[];return}state.addresses=data||[]}
 function addressText(a){return [a?.address_line1,a?.address_line2,a?.postal_code,a?.postal_locality,a?.country].map(v=>String(v||'').trim()).filter(Boolean).join(', ')}
@@ -593,7 +589,14 @@ async function deleteClient(id){
 }
 
 
-async function render(){if(!state.session){await loadCountryNames();app.innerHTML=auth();document.getElementById('authForm')?.addEventListener('submit',doAuth);window.CONSULDOCE_I18N?.translatePage();return}if(state.route==='#/admin' && state.profile?.role!=='admin'){state.route='#/catalog'}if(state.route==='#/force-password'){app.innerHTML=forcePassword();document.getElementById('forcePasswordForm')?.addEventListener('submit',changeForcedPassword);window.CONSULDOCE_I18N?.translatePage();return}if(state.route==='#/admin'){app.innerHTML=admin();await renderAdmin()}else if(state.route==='#/account'){await loadCountryNames();app.innerHTML=account();document.getElementById('accountProfileForm')?.addEventListener('submit',saveAccountProfile);document.getElementById('accountPasswordForm')?.addEventListener('submit',changeAccountPassword)}else{await loadProducts();app.innerHTML=catalog();filterProducts()}window.CONSULDOCE_I18N?.translatePage()}
+async function render(){
+  // A preferência de idioma é global à aplicação e deve sobreviver à autenticação.
+  // Recarregamo-la sempre antes de renderizar para garantir que a escolha feita
+  // no login é a mesma usada nas páginas autenticadas.
+  const storedLanguage=localStorage.getItem('consuldoce_language');
+  if(storedLanguage==='zh-CN'||storedLanguage==='pt') state.language=storedLanguage;
+  document.documentElement.lang=state.language==='zh-CN'?'zh-CN':'pt-PT';
+  if(!state.session){await loadCountryNames();app.innerHTML=auth();document.getElementById('authForm')?.addEventListener('submit',doAuth);window.CONSULDOCE_I18N?.translatePage();return}if(state.route==='#/admin' && state.profile?.role!=='admin'){state.route='#/catalog'}if(state.route==='#/force-password'){app.innerHTML=forcePassword();document.getElementById('forcePasswordForm')?.addEventListener('submit',changeForcedPassword);window.CONSULDOCE_I18N?.translatePage();return}if(state.route==='#/admin'){app.innerHTML=admin();await renderAdmin()}else if(state.route==='#/account'){await loadCountryNames();app.innerHTML=account();document.getElementById('accountProfileForm')?.addEventListener('submit',saveAccountProfile);document.getElementById('accountPasswordForm')?.addEventListener('submit',changeAccountPassword)}else{await loadProducts();app.innerHTML=catalog();filterProducts()}window.CONSULDOCE_I18N?.translatePage()}
 
 
 /* V28: restored functions accidentally removed during previous refactors. */

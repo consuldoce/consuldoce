@@ -197,3 +197,13 @@
   .bulkbar{padding-bottom:8px}
   .bulkbar .btn-small{font-size:11px;padding:8px 9px}
 }
+
+/* v52 — pesquisa, filtros e ordenação nas listas de administração */
+.admin-list-toolbar{display:flex;flex-wrap:nowrap;align-items:center;gap:10px}
+.admin-list-toolbar .search{min-width:260px;flex:1 1 auto}
+.admin-list-toolbar .category{width:220px;max-width:220px;flex:0 0 220px}
+.admin-list-toolbar .sort{width:230px;max-width:230px;flex:0 0 230px}
+@media(max-width:900px){
+  .admin-list-toolbar{flex-wrap:wrap}
+  .admin-list-toolbar .search,.admin-list-toolbar .category,.admin-list-toolbar .sort{width:100%;max-width:none;flex:1 1 100%;min-width:0}
+}

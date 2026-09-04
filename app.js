@@ -74,8 +74,12 @@ async function setLanguage(lang){
   window.CONSULDOCE_I18N?.translatePage();
 
   if(!state.session){
-    // Auth (login, registo, recuperação) deve mudar de idioma sem qualquer
-    // chamada de rede e sem reconstruir o formulário.
+    // No ecrã de entrada reconstruímos apenas o bloco de autenticação. Assim
+    // a tradução não depende de MutationObserver nem de qualquer chamada de rede.
+    // O próprio botão também é criado no idioma correto.
+    app.innerHTML=auth();
+    document.getElementById('authForm')?.addEventListener('submit',doAuth);
+    window.CONSULDOCE_I18N?.translatePage();
     requestAnimationFrame(()=>window.CONSULDOCE_I18N?.translatePage());
     return;
   }

@@ -420,3 +420,6 @@ Cada referência pode ser encomendada em quantidade de 1 a 99 unidades por encom
 
 ### V57 — idioma PT / 中文 robusto
 Correção da troca de idioma: a interface traduz imediatamente, aguarda o render assíncrono e reaplica a tradução após o render. O idioma é mantido em `localStorage` e continua disponível na página de entrada e nas páginas autenticadas.
+
+### V60 — tradução no ecrã de entrada
+Correção da troca PT / 中文 no login, registo e recuperação: ao mudar de idioma, o bloco de autenticação é reconstruído imediatamente no idioma selecionado e a tradução local é reaplicada. Não depende de chamadas de rede.

@@ -19,13 +19,14 @@
 </head>
 <body>
   <div id="app"></div>
+  <div id="cartMount"></div>
   <div id="toast" class="toast" aria-live="polite"></div>
   <div id="fatalError" style="display:none;max-width:760px;margin:48px auto;padding:24px;border:1px solid #ead7e8;border-radius:16px;background:#fff;font-family:Inter,Arial,sans-serif;color:#32163f"><h2 style="margin:0 0 8px">Não foi possível carregar o catálogo</h2><p id="fatalErrorText" style="margin:0;color:#5f5265">Recarregue a página. Se o problema persistir, envie esta mensagem à administração.</p></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.113.0" crossorigin="anonymous"></script>
   <script src="config.js"></script>
   <script src="i18n.js"></script>
   <script>setTimeout(function(){var a=document.getElementById("app");if(a&&!a.innerHTML.trim()){var e=document.getElementById("fatalError");if(e){document.getElementById("fatalErrorText").textContent="A aplicação não conseguiu iniciar. Verifique a configuração do Supabase e recarregue a página.";e.style.display="block"}}},12000); window.addEventListener("error", function(e){var el=document.getElementById("fatalError"), t=document.getElementById("fatalErrorText"); if(el&&t){t.textContent="Erro de carregamento: "+(e.error&&e.error.message?e.error.message:(e.message||"erro desconhecido")); el.style.display="block";}}); window.addEventListener("unhandledrejection", function(e){var el=document.getElementById("fatalError"), t=document.getElementById("fatalErrorText"); if(el&&t){t.textContent="Erro de carregamento: "+(e.reason&&e.reason.message?e.reason.message:String(e.reason)); el.style.display="block";}});</script>
-  <script defer src="app.js?v=20260904-53"></script>
-  <script>if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js?v=20260904-53").catch(()=>{}));}</script>
+  <script defer src="app.js?v=20260904-56"></script>
+  <script>if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js?v=20260904-56").catch(()=>{}));}</script>
 </body>
 </html>

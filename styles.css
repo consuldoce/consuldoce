@@ -160,3 +160,5 @@
 
 .client-actions{display:flex;gap:6px;flex-wrap:wrap;align-items:center}.client-actions .btn{white-space:nowrap}.country-input{width:100%}
 @media(max-width:780px){.client-actions{min-width:240px}.client-actions .btn{flex:1 1 auto}}
+.auth-language{display:flex;justify-content:flex-end;margin:-10px 0 10px}.auth-language .btn{min-width:78px}
+.goog-te-banner-frame.skiptranslate{display:none!important}body{top:0!important}.goog-te-gadget{font-size:0!important}

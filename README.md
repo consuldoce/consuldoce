@@ -391,7 +391,7 @@ A `service_role` nunca deve ser colocada em `config.js` nem no browser.
 
 ## Idioma
 
-O header inclui a opção **中文** para traduzir a interface para mandarim (chinês simplificado). A tradução usa o Google Translate no navegador e não altera os dados guardados na base de dados. O idioma escolhido é mantido localmente neste dispositivo.
+O header inclui a opção **中文** para traduzir a interface para mandarim (chinês simplificado). A tradução para mandarim é uma versão local da interface, sem dependência de serviços externos de tradução. O idioma escolhido é mantido localmente neste dispositivo.
 
 ### V43 — tradução PT / 中文
-A opção de idioma está disponível também no ecrã de entrada (login, registo e recuperação). O carregamento do Google Translate foi corrigido para respeitar a CSP e o botão renderiza imediatamente, aplicando a tradução assim que o tradutor fica disponível.
+A opção de idioma está disponível também no ecrã de entrada (login, registo e recuperação). A versão em mandarim é aplicada localmente e de forma imediata, incluindo nos ecrãs de login, registo e recuperação.

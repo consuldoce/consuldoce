@@ -60,14 +60,23 @@ async function setLanguage(lang){
   state.language=lang==='zh-CN'?'zh-CN':'pt';
   localStorage.setItem('consuldoce_language',state.language);
   document.documentElement.lang=state.language==='zh-CN'?'zh-CN':'pt-PT';
-  // Traduz imediatamente o DOM atual e, depois, volta a traduzir após cada render
-  // assíncrono. Isto evita que a nova página seja redesenhada em PT depois do clique.
+
+  // Na entrada/login não devemos esperar pelo Supabase nem voltar a renderizar a
+  // página: isso fazia o clique parecer não funcionar enquanto a consulta de
+  // países/sessão ainda estava pendente. A tradução local é instantânea.
   window.dispatchEvent(new CustomEvent('consuldoce-language-change',{detail:{language:state.language}}));
   window.CONSULDOCE_I18N?.translatePage();
+
+  if(!state.session){
+    // Auth (login, registo, recuperação) deve mudar de idioma sem qualquer
+    // chamada de rede e sem reconstruir o formulário.
+    requestAnimationFrame(()=>window.CONSULDOCE_I18N?.translatePage());
+    return;
+  }
+
   try { await render(); } catch(e) { console.error(e); }
   window.CONSULDOCE_I18N?.translatePage();
   requestAnimationFrame(()=>window.CONSULDOCE_I18N?.translatePage());
-  setTimeout(()=>window.CONSULDOCE_I18N?.translatePage(),80);
 }
 function toggleLanguage(){return setLanguage(state.language==='zh-CN'?'pt':'zh-CN')}
 
@@ -685,4 +694,4 @@ window.addEventListener('popstate',()=>{if(state.authMode==='registered'){state.
 window.addEventListener('hashchange',()=>{state.route=location.hash||'#/catalog';if(state.authMode==='registered' && state.route!=='#/login'){state.authMode='login';}safeRender()});
 let renderInFlight=false;
 async function safeRender(){try{if(!app)return;await render()}catch(err){console.error('CONSULDOCE render error',err);if(app)app.innerHTML=`<div class="auth-shell"><div class="auth-card"><div class="eyebrow">Erro de carregamento</div><h1 class="h1">Não foi possível abrir a aplicação</h1><p class="lead">Ocorreu um erro ao apresentar esta página. Recarregue e tente novamente.</p><div class="notice danger">${esc(err?.message||'Erro inesperado.')}</div></div></div>`}}
-(async()=>{try{initSupabase();if(!cfg.SUPABASE_URL||!cfg.SUPABASE_PUBLISHABLE_KEY||cfg.SUPABASE_URL.includes('SEU-PROJETO')){app.innerHTML=`<div class="auth-shell"><div class="auth-card"><div class="eyebrow">Configuração</div><h1 class="h1">Ligar o catálogo ao Supabase</h1><p class="lead">Configure o URL e a chave pública do projeto Supabase em <strong>config.js</strong>.</p><div class="notice">Não coloque a <strong>service_role key</strong> no navegador.</div></div></div>`;return}if(isRecoveryLocation())state.authMode='recovery';app.innerHTML=auth();document.getElementById('authForm')?.addEventListener('submit',doAuth);await Promise.race([loadSession(),new Promise(resolve=>setTimeout(resolve,8000))]);if(!state.session && !state.recoveryFlow && !app.innerHTML.trim()) safeRender()}catch(err){console.error('CONSULDOCE boot error',err);const msg=err?.message||'Erro inesperado ao iniciar a aplicação.';app.innerHTML=`<div class="auth-shell"><div class="auth-card"><div class="eyebrow">Erro de carregamento</div><h1 class="h1">Não foi possível abrir o catálogo</h1><p class="lead">A aplicação foi carregada, mas não conseguiu concluir a ligação ao serviço. Tente recarregar a página.</p><div class="notice danger">${esc(msg)}</div></div></div>`}})();
+(async()=>{try{initSupabase();if(!cfg.SUPABASE_URL||!cfg.SUPABASE_PUBLISHABLE_KEY||cfg.SUPABASE_URL.includes('SEU-PROJETO')){app.innerHTML=`<div class="auth-shell"><div class="auth-card"><div class="eyebrow">Configuração</div><h1 class="h1">Ligar o catálogo ao Supabase</h1><p class="lead">Configure o URL e a chave pública do projeto Supabase em <strong>config.js</strong>.</p><div class="notice">Não coloque a <strong>service_role key</strong> no navegador.</div></div></div>`;return}if(isRecoveryLocation())state.authMode='recovery';app.innerHTML=auth();document.getElementById('authForm')?.addEventListener('submit',doAuth);window.CONSULDOCE_I18N?.translatePage();await Promise.race([loadSession(),new Promise(resolve=>setTimeout(resolve,8000))]);if(!state.session && !state.recoveryFlow && !app.innerHTML.trim()) safeRender()}catch(err){console.error('CONSULDOCE boot error',err);const msg=err?.message||'Erro inesperado ao iniciar a aplicação.';app.innerHTML=`<div class="auth-shell"><div class="auth-card"><div class="eyebrow">Erro de carregamento</div><h1 class="h1">Não foi possível abrir o catálogo</h1><p class="lead">A aplicação foi carregada, mas não conseguiu concluir a ligação ao serviço. Tente recarregar a página.</p><div class="notice danger">${esc(msg)}</div></div></div>`}})();

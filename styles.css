@@ -197,3 +197,12 @@
   .bulkbar{padding-bottom:8px}
   .bulkbar .btn-small{font-size:11px;padding:8px 9px}
 }
+
+
+/* V54 — filtros completos por coluna na administração de clientes */
+.client-filter-toolbar{display:grid;grid-template-columns:minmax(280px,1fr) minmax(220px,320px);gap:10px}
+.client-column-filters{display:grid;grid-template-columns:repeat(6,minmax(120px,1fr));gap:8px;margin:8px 0 12px}
+.client-column-filters .field{min-width:0}
+@media(max-width:1100px){.client-column-filters{grid-template-columns:repeat(3,minmax(140px,1fr))}}
+@media(max-width:700px){.client-filter-toolbar{grid-template-columns:1fr}.client-column-filters{grid-template-columns:repeat(2,minmax(130px,1fr))}}
+@media(max-width:460px){.client-column-filters{grid-template-columns:1fr}}

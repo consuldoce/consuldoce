@@ -462,8 +462,66 @@ async function bulkUploadProductImages(files){
 async function adminClients(c){
   const {data,error}=await sb.from('profiles').select('id,email,full_name,nif,phone_country_code,phone_number,address,address_line1,address_line2,postal_code,postal_locality,country,role,created_at').order('created_at',{ascending:false});
   if(error){c.innerHTML=`<div class="panel danger">${esc(error.message)}</div>`;return}
-  const rows=(data||[]).map(p=>`<tr><td><strong>${esc(p.full_name||'—')}</strong></td><td>${esc(p.nif||'—')}</td><td>${esc(p.email||'—')}</td><td>${esc((p.phone_country_code||'')+' '+(p.phone_number||'')).trim()||'—'}</td><td>${esc(profileAddress(p))}</td><td>${new Date(p.created_at).toLocaleDateString('pt-PT')}</td><td><div class="client-actions"><button class="btn btn-light btn-small" data-action="client-history" data-id="${esc(p.id)}">Histórico</button><button class="btn btn-light btn-small" data-action="client-reset-password" data-id="${esc(p.id)}">Reset password</button>${p.id===state.session.user.id?'<span class="hint">Conta atual</span>':'<button class="btn btn-danger btn-small" data-action="client-delete" data-id="'+esc(p.id)+'">Eliminar</button>'}</div></td></tr>`).join('');
-  c.innerHTML=`<div class="panel"><h2 class="panel-title">Clientes</h2><p class="hint">Dados necessários à identificação e faturação do cliente. A conta de administrador atualmente autenticada não pode ser eliminada.</p><div class="table-wrap"><table class="table"><thead><tr><th>Nome</th><th>NIF</th><th>Email</th><th>Telemóvel</th><th>Morada</th><th>Registo</th><th>Ações</th></tr></thead><tbody>${rows||'<tr><td colspan="7">Sem clientes.</td></tr>'}</tbody></table></div></div>`;
+  window.__adminClients=data||[];
+  c.innerHTML=`<div class="panel"><h2 class="panel-title">Clientes</h2><p class="hint">Dados necessários à identificação e faturação do cliente. A conta de administrador atualmente autenticada não pode ser eliminada.</p>
+    <div class="toolbar admin-list-toolbar client-filter-toolbar" style="margin-top:14px">
+      <input id="adminClientSearch" class="field search" placeholder="Pesquisar em todos os campos..." data-action="filter-admin-clients">
+      <select id="adminClientSort" class="field sort" data-action="filter-admin-clients">
+        <option value="created_desc">Registo mais recente</option><option value="created_asc">Registo mais antigo</option>
+        <option value="name_asc">Nome A–Z</option><option value="name_desc">Nome Z–A</option>
+        <option value="nif_asc">NIF A–Z</option><option value="nif_desc">NIF Z–A</option>
+        <option value="email_asc">Email A–Z</option><option value="email_desc">Email Z–A</option>
+        <option value="phone_asc">Telemóvel A–Z</option><option value="phone_desc">Telemóvel Z–A</option>
+        <option value="address_asc">Morada A–Z</option><option value="address_desc">Morada Z–A</option>
+      </select>
+    </div>
+    <div class="client-column-filters" aria-label="Filtros por coluna">
+      <input id="adminClientName" class="field" placeholder="Nome" data-action="filter-admin-clients">
+      <input id="adminClientNif" class="field" placeholder="NIF" data-action="filter-admin-clients">
+      <input id="adminClientEmail" class="field" placeholder="Email" data-action="filter-admin-clients">
+      <input id="adminClientPhone" class="field" placeholder="Telemóvel" data-action="filter-admin-clients">
+      <input id="adminClientAddress" class="field" placeholder="Morada" data-action="filter-admin-clients">
+      <input id="adminClientDate" class="field" type="date" aria-label="Data de registo" data-action="filter-admin-clients">
+    </div>
+    <div id="adminClientsSummary" class="hint" style="margin:-1px 0 12px"></div>
+    <div class="table-wrap"><table class="table"><thead><tr><th>Nome</th><th>NIF</th><th>Email</th><th>Telemóvel</th><th>Morada</th><th>Registo</th><th>Ações</th></tr></thead><tbody id="adminClientsBody"></tbody></table></div></div>`;
+  renderAdminClientRows(window.__adminClients);
+}
+
+function adminClientFields(p){
+  return {
+    name:String(p.full_name||''), nif:String(p.nif||''), email:String(p.email||''),
+    phone:String(((p.phone_country_code||'')+' '+(p.phone_number||'')).trim()),
+    address:String(profileAddress(p)||''), date:p.created_at?new Date(p.created_at):null
+  };
+}
+
+function filterAdminClients(){
+  const all=window.__adminClients||[];
+  const search=String(document.getElementById('adminClientSearch')?.value||'').trim().toLocaleLowerCase('pt-PT');
+  const filters={
+    name:String(document.getElementById('adminClientName')?.value||'').trim().toLocaleLowerCase('pt-PT'),
+    nif:String(document.getElementById('adminClientNif')?.value||'').trim().toLocaleLowerCase('pt-PT'),
+    email:String(document.getElementById('adminClientEmail')?.value||'').trim().toLocaleLowerCase('pt-PT'),
+    phone:String(document.getElementById('adminClientPhone')?.value||'').trim().toLocaleLowerCase('pt-PT'),
+    address:String(document.getElementById('adminClientAddress')?.value||'').trim().toLocaleLowerCase('pt-PT'),
+    date:String(document.getElementById('adminClientDate')?.value||'')
+  };
+  let list=all.filter(p=>{
+    const f=adminClientFields(p);
+    const hay=[f.name,f.nif,f.email,f.phone,f.address,f.date?f.date.toLocaleDateString('pt-PT'):''].join(' ').toLocaleLowerCase('pt-PT');
+    return (!search||hay.includes(search)) && (!filters.name||f.name.toLocaleLowerCase('pt-PT').includes(filters.name)) && (!filters.nif||f.nif.toLocaleLowerCase('pt-PT').includes(filters.nif)) && (!filters.email||f.email.toLocaleLowerCase('pt-PT').includes(filters.email)) && (!filters.phone||f.phone.toLocaleLowerCase('pt-PT').includes(filters.phone)) && (!filters.address||f.address.toLocaleLowerCase('pt-PT').includes(filters.address)) && (!filters.date|| (f.date && f.date.toISOString().slice(0,10)===filters.date));
+  });
+  const sort=String(document.getElementById('adminClientSort')?.value||'created_desc');
+  const cmp=(a,b)=>String(a??'').localeCompare(String(b??''),'pt',{numeric:true,sensitivity:'base'});
+  list.sort((a,b)=>{const fa=adminClientFields(a),fb=adminClientFields(b);switch(sort){case 'created_asc':return (fa.date?.getTime()||0)-(fb.date?.getTime()||0);case 'name_asc':return cmp(fa.name,fb.name);case 'name_desc':return cmp(fb.name,fa.name);case 'nif_asc':return cmp(fa.nif,fb.nif);case 'nif_desc':return cmp(fb.nif,fa.nif);case 'email_asc':return cmp(fa.email,fb.email);case 'email_desc':return cmp(fb.email,fa.email);case 'phone_asc':return cmp(fa.phone,fb.phone);case 'phone_desc':return cmp(fb.phone,fa.phone);case 'address_asc':return cmp(fa.address,fb.address);case 'address_desc':return cmp(fb.address,fa.address);default:return (fb.date?.getTime()||0)-(fa.date?.getTime()||0)}});
+  renderAdminClientRows(list);
+}
+
+function renderAdminClientRows(list){
+  const body=document.getElementById('adminClientsBody');if(!body)return;
+  const summary=document.getElementById('adminClientsSummary');if(summary)summary.textContent=`${list.length} de ${(window.__adminClients||[]).length} cliente${(window.__adminClients||[]).length===1?'':'s'}`;
+  body.innerHTML=list.length?list.map(p=>`<tr><td><strong>${esc(p.full_name||'—')}</strong></td><td>${esc(p.nif||'—')}</td><td>${esc(p.email||'—')}</td><td>${esc((p.phone_country_code||'')+' '+(p.phone_number||'')).trim()||'—'}</td><td>${esc(profileAddress(p))}</td><td>${p.created_at?new Date(p.created_at).toLocaleDateString('pt-PT'):'—'}</td><td><div class="client-actions"><button class="btn btn-light btn-small" data-action="client-history" data-id="${esc(p.id)}">Histórico</button><button class="btn btn-light btn-small" data-action="client-reset-password" data-id="${esc(p.id)}">Reset password</button>${p.id===state.session.user.id?'<span class="hint">Conta atual</span>':'<button class="btn btn-danger btn-small" data-action="client-delete" data-id="'+esc(p.id)+'">Eliminar</button>'}</div></td></tr>`).join(''):'<tr><td colspan="7"><div class="empty">Não foram encontrados clientes com os critérios selecionados.</div></td></tr>';
 }
 
 async function invokeClientAdmin(action,clientId){
@@ -594,6 +652,7 @@ document.addEventListener('input',(event)=>{
     else if(a==='set-qty') setQty(el.dataset.id, el.value);
     else if(a==='cart-set-qty') { setQty(el.dataset.id, el.value); openCart(); }
     else if(a==='filter-admin') filterAdminProducts();
+    else if(a==='filter-admin-clients') filterAdminClients();
   } catch(err) { console.error('CONSULDOCE input action error', a, err); }
 });
 document.addEventListener('change',(event)=>{
@@ -608,6 +667,7 @@ document.addEventListener('change',(event)=>{
     else if(a==='order-status') updateOrderStatus(el.dataset.id, el.value);
     else if(a==='order-address') updateCheckoutAddress();
     else if(a==='filter-admin') filterAdminProducts();
+    else if(a==='filter-admin-clients') filterAdminClients();
     else if(a==='toggle-all-admin') toggleAllAdminProducts(el.checked);
     else if(a==='bulk-upload-images') bulkUploadProductImages(el.files);
     else if(a==='toggle-admin-product') toggleAdminProduct(el.dataset.id, el.checked);

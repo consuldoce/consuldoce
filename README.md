@@ -406,3 +406,9 @@ A opção de idioma está disponível também no ecrã de entrada (login, regist
 - Administração permanece sempre em português, independentemente do idioma escolhido.
 - Estados das encomendas apresentados em português ou mandarim no lado do cliente.
 - No catálogo público é apresentado apenas o ID do produto; o código de barras permanece interno.
+
+
+## V54 — filtros de clientes na administração
+- A secção Clientes passou a ter pesquisa global, filtros individuais por Nome, NIF, Email, Telemóvel, Morada e Data de registo.
+- A ordenação pode ser feita por cada uma das colunas apresentadas na tabela.
+- Não requer alteração SQL.

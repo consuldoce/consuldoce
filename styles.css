@@ -171,3 +171,29 @@
 @media(max-width:780px){.client-actions{min-width:240px}.client-actions .btn{flex:1 1 auto}}
 .auth-language{display:flex;justify-content:flex-end;margin:-10px 0 10px}.auth-language .btn{min-width:78px}
 
+
+/* v51 — administração: importação de imagens separada e ações numa única linha */
+.bulkbar{
+  flex-wrap:nowrap;
+  overflow-x:auto;
+  overflow-y:hidden;
+  gap:6px;
+  scrollbar-width:thin;
+}
+.bulkbar > *{flex:0 0 auto;white-space:nowrap}
+.bulkbar .btn-small,.bulkbar .file-button{
+  font-size:11px;
+  padding:8px 10px;
+  line-height:1.15;
+}
+.import-images-panel{margin-top:18px}
+.import-images-panel .dropzone{min-height:150px}
+@media (min-width:1200px){
+  .admin-layout .panel{width:100%}
+  .admin-layout .bulkbar{overflow-x:visible}
+  .admin-layout .bulkbar .btn-small{font-size:11px;padding:8px 9px}
+}
+@media (max-width:780px){
+  .bulkbar{padding-bottom:8px}
+  .bulkbar .btn-small{font-size:11px;padding:8px 9px}
+}

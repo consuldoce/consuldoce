@@ -1,3 +1,8 @@
+## Versão v51
+- Administração: separador **Importar dados** concentra importação Sage 50 e carregamento de fotografias em lote.
+- A página Produtos mantém as ações de seleção/gestão sem o carregamento de imagens.
+- A barra de ações dos produtos permanece numa única linha no desktop, com rolagem horizontal apenas quando necessário em ecrãs mais estreitos.
+
 
 ## V41
 - Área de cliente: removido o botão de envio de email de redefinição da palavra-passe. A alteração da palavra-passe autenticada é feita diretamente no formulário de nova palavra-passe.

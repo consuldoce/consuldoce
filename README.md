@@ -416,3 +416,7 @@ A opção de idioma está disponível também no ecrã de entrada (login, regist
 
 ### Limite de quantidade por encomenda
 Cada referência pode ser encomendada em quantidade de 1 a 99 unidades por encomenda. O limite é aplicado no catálogo/carrinho e novamente no servidor através da função `create_order`.
+
+
+### V57 — idioma PT / 中文 robusto
+Correção da troca de idioma: a interface traduz imediatamente, aguarda o render assíncrono e reaplica a tradução após o render. O idioma é mantido em `localStorage` e continua disponível na página de entrada e nas páginas autenticadas.

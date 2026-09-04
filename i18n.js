@@ -28,8 +28,13 @@
     try{return new Intl.DisplayNames(['zh-CN'],{type:'region'}).of(row[0])||null}catch(e){return null}
   }
   function translateString(s){let out=s;for(const [pt,zh] of replacements){if(out===pt)return zh;out=out.split(pt).join(zh)}out=out.replace(/Carrinho \((\d+)\)/g,'购物车 ($1)').replace(/Encomenda #/g,'订单 #');out=out.replace(/(\d+) produto(s)? selecionado(s)?/gi,'$1 个产品已选择').replace(/(\d+) imagens apagadas do armazenamento/g,'已从存储中删除 $1 张图片');return out}
+  function currentLanguage(){
+    const stored=localStorage.getItem('consuldoce_language');
+    if(stored==='zh-CN'||stored==='pt')return stored;
+    return window.state?.language==='zh-CN'?'zh-CN':'pt';
+  }
   function translatePage(){
-    const isAdmin=location.hash.split('?')[0]==='#/admin';const isZh=!isAdmin && localStorage.getItem('consuldoce_language')==='zh-CN';
+    const isAdmin=location.hash.split('?')[0]==='#/admin';const isZh=!isAdmin && currentLanguage()==='zh-CN';
     document.documentElement.lang=isZh?'zh-CN':'pt-PT';
     const root=document.body;if(!root)return;
     const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);const nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);
@@ -37,5 +42,9 @@
     root.querySelectorAll('input,textarea,select,button,[title],[aria-label]').forEach(el=>{let map=originalAttrs.get(el);if(!map){map={};originalAttrs.set(el,map)}['placeholder','title','aria-label'].forEach(a=>{if(el.hasAttribute(a)){if(!(a in map))map[a]=el.getAttribute(a);const next=isZh?translateString(map[a]):map[a];if(el.getAttribute(a)!==next)el.setAttribute(a,next)}})});
   }
   window.CONSULDOCE_I18N={translatePage,dict};
+  window.addEventListener('consuldoce-language-change',()=>{
+    translatePage();
+    requestAnimationFrame(translatePage);
+  });
   let scheduled=false;const observer=new MutationObserver(()=>{if(scheduled)return;scheduled=true;requestAnimationFrame(()=>{scheduled=false;translatePage()})});observer.observe(document.body,{childList:true,subtree:true});
 })();

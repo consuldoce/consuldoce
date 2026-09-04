@@ -397,7 +397,7 @@ O header inclui a opção **中文** para traduzir a interface para mandarim (ch
 A opção de idioma está disponível também no ecrã de entrada (login, registo e recuperação). A versão em mandarim é aplicada localmente e de forma imediata, incluindo nos ecrãs de login, registo e recuperação.
 
 
-## V47
+## V48
 - Administração permanece sempre em português, independentemente do idioma escolhido.
 - Estados das encomendas apresentados em português ou mandarim no lado do cliente.
 - No catálogo público é apresentado apenas o ID do produto; o código de barras permanece interno.

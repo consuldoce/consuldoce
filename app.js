@@ -213,7 +213,62 @@ async function doAuth(e){
 async function logout(){await sb?.auth.signOut();state.session=null;state.profile=null;setRoute('#/login')}
 
 function isRecoveryLocation(){const path=String(location.pathname||'').replace(/\/+$/,'')||'/';const query=new URLSearchParams(location.search);const hash=location.hash.startsWith('#')?location.hash.slice(1):location.hash;const hashParams=new URLSearchParams(hash);return path==='/recovery'||query.get('recovery')==='1'||query.get('type')==='recovery'||hashParams.get('type')==='recovery'||location.hash.includes('access_token=')||location.hash.includes('refresh_token=')}
-async function loadSession(){if(!sb){state.route='#/login';return}if(isRecoveryLocation())state.recoveryFlow=true;if(state.recoveryFlow)state.authMode='recovery';const applySession=async(event,s)=>{state.language=localStorage.getItem('consuldoce_language')==='zh-CN'?'zh-CN':'pt';document.documentElement.lang=state.language==='zh-CN'?'zh-CN':'pt-PT';const recovery=state.recoveryFlow||event==='PASSWORD_RECOVERY';if(recovery){state.authMode='recovery';state.session=s||state.session;state.profile=null;state.route='#/reset-password';render();return}state.session=s;if(s){await loadProfile();if(state.profile?.must_change_password){state.route='#/force-password'}else if(state.route==='#/login'||state.route==='#/reset-password')state.route='#/catalog'}else{state.profile=null;state.route='#/login'}render()};sb.auth.onAuthStateChange((event,s)=>{setTimeout(()=>applySession(event,s),0)});const {data}=await sb.auth.getSession();await applySession('INITIAL_SESSION',data.session)}
+async function loadSession(){
+  if(!sb){state.route='#/login';return}
+  if(isRecoveryLocation())state.recoveryFlow=true;
+  if(state.recoveryFlow)state.authMode='recovery';
+
+  const persistedLanguage=()=>localStorage.getItem('consuldoce_language')==='zh-CN'?'zh-CN':'pt';
+
+  const applySession=async(event,s)=>{
+    // Capture the language selected on the entry screen BEFORE rendering the
+    // first authenticated page. Never reset it to Portuguese during login.
+    state.language=persistedLanguage();
+    document.documentElement.lang=state.language==='zh-CN'?'zh-CN':'pt-PT';
+
+    const recovery=state.recoveryFlow||event==='PASSWORD_RECOVERY';
+    if(recovery){
+      state.authMode='recovery';
+      state.session=s||state.session;
+      state.profile=null;
+      state.route='#/reset-password';
+      await render();
+      return;
+    }
+
+    state.session=s;
+    if(s){
+      await loadProfile();
+      if(state.profile?.must_change_password){
+        state.route='#/force-password';
+      }else if(state.route==='#/login'||state.route==='#/reset-password'){
+        state.route='#/catalog';
+      }
+    }else{
+      state.profile=null;
+      state.route='#/login';
+    }
+
+    // Render the first authenticated page using the persisted language.
+    state.language=persistedLanguage();
+    document.documentElement.lang=state.language==='zh-CN'?'zh-CN':'pt-PT';
+    await render();
+
+    // Some catalog/admin fragments are rendered asynchronously. Re-apply the
+    // local dictionary after the first paint so the initial page never flashes
+    // or remains in Portuguese after a Chinese login.
+    if(state.language==='zh-CN'){
+      requestAnimationFrame(()=>{
+        window.CONSULDOCE_I18N?.translatePage();
+        setTimeout(()=>window.CONSULDOCE_I18N?.translatePage(),50);
+      });
+    }
+  };
+
+  sb.auth.onAuthStateChange((event,s)=>{setTimeout(()=>applySession(event,s),0)});
+  const {data}=await sb.auth.getSession();
+  await applySession('INITIAL_SESSION',data.session);
+}
 async function loadProfile(){const {data,error}=await sb.from('profiles').select('*').eq('id',state.session.user.id).single();if(!error){state.profile=data;const authEmail=String(state.session.user.email||'').trim().toLowerCase();if(authEmail&&authEmail!==String(data.email||'').trim().toLowerCase()){const {data:updated}=await sb.from('profiles').update({email:authEmail}).eq('id',state.session.user.id).select('*').single();if(updated)state.profile=updated}}else state.profile={id:state.session.user.id,email:state.session.user.email,role:'client'};await loadAddresses()}
 async function loadAddresses(){if(!sb||!state.session){state.addresses=[];return}const {data,error}=await sb.from('customer_addresses').select('id,label,address_line1,address_line2,postal_code,postal_locality,country,is_default,created_at,updated_at').eq('client_id',state.session.user.id).order('is_default',{ascending:false}).order('created_at',{ascending:true});if(error){console.error('loadAddresses',error);state.addresses=[];return}state.addresses=data||[]}
 function addressText(a){return [a?.address_line1,a?.address_line2,a?.postal_code,a?.postal_locality,a?.country].map(v=>String(v||'').trim()).filter(Boolean).join(', ')}

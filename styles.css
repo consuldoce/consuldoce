@@ -156,3 +156,6 @@
   .image-preview-body{padding:12px;min-height:240px}
   .image-preview-body img{max-height:calc(94vh - 145px)}
 }
+
+.client-actions{display:flex;gap:6px;flex-wrap:wrap;align-items:center}.client-actions .btn{white-space:nowrap}.country-input{width:100%}
+@media(max-width:780px){.client-actions{min-width:240px}.client-actions .btn{flex:1 1 auto}}

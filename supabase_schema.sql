@@ -33,6 +33,7 @@ create table if not exists public.profiles (
   postal_locality text not null default '',
   country text not null default 'Portugal',
   role public.user_role not null default 'client',
+  must_change_password boolean not null default false,
   created_at timestamptz not null default now()
 );
 
@@ -644,7 +645,10 @@ where not exists(select 1 from public.customer_addresses a where a.client_id=p.i
 -- -----------------------------------------------------------------------------
 create table if not exists public.orders (
   id uuid primary key default gen_random_uuid(),
-  client_id uuid not null references public.profiles(id) on delete restrict,
+  client_id uuid references public.profiles(id) on delete set null,
+  client_name_snapshot text not null default '',
+  client_email_snapshot text not null default '',
+  client_nif_snapshot text not null default '',
   status public.order_status not null default 'new',
   notes text,
   delivery_address_id uuid references public.customer_addresses(id) on delete set null,
@@ -703,6 +707,17 @@ alter table public.orders add constraint orders_delivery_country_fkey foreign ke
 -- aplicado dentro de create_order() mais abaixo.
 alter table public.order_items drop constraint if exists order_items_quantity_max_chk;
 alter table public.order_items add constraint order_items_quantity_max_chk check (quantity <= 100000);
+
+-- Customer-account administration support.
+alter table public.profiles drop constraint if exists profiles_must_change_password_chk;
+alter table public.profiles add constraint profiles_must_change_password_chk check (must_change_password is not null);
+alter table public.orders drop constraint if exists orders_client_name_snapshot_len_chk;
+alter table public.orders add constraint orders_client_name_snapshot_len_chk check (char_length(client_name_snapshot) <= 150);
+alter table public.orders drop constraint if exists orders_client_email_snapshot_len_chk;
+alter table public.orders add constraint orders_client_email_snapshot_len_chk check (char_length(client_email_snapshot) <= 255);
+alter table public.orders drop constraint if exists orders_client_nif_snapshot_len_chk;
+alter table public.orders add constraint orders_client_nif_snapshot_len_chk check (char_length(client_nif_snapshot) <= 20);
+
 
 
 
@@ -936,8 +951,9 @@ begin
   select * into v_address from public.customer_addresses where id=p_address_id and client_id=auth.uid();
   if not found then raise exception 'Morada de entrega inválida'; end if;
 
-  insert into public.orders(client_id, notes, delivery_address_id, delivery_address_label, delivery_address_line1, delivery_address_line2, delivery_postal_code, delivery_postal_locality, delivery_country)
-  values (auth.uid(), nullif(left(coalesce(p_notes,''),1000),''), v_address.id, v_address.label, v_address.address_line1, v_address.address_line2, v_address.postal_code, v_address.postal_locality, v_address.country)
+  insert into public.orders(client_id, client_name_snapshot, client_email_snapshot, client_nif_snapshot, notes, delivery_address_id, delivery_address_label, delivery_address_line1, delivery_address_line2, delivery_postal_code, delivery_postal_locality, delivery_country)
+  select auth.uid(), p.full_name, coalesce(p.email,''), p.nif, nullif(left(coalesce(p_notes,''),1000),''), v_address.id, v_address.label, v_address.address_line1, v_address.address_line2, v_address.postal_code, v_address.postal_locality, v_address.country
+  from public.profiles p where p.id=auth.uid()
   returning id into v_order_id;
 
   for v_item in select * from jsonb_array_elements(p_items) loop
@@ -993,9 +1009,11 @@ using (bucket_id = 'product-images' and public.is_admin());
 -- 2. The service_role key is required only by the Edge Function that sends order email.
 -- 3. The registration page does not expose a public "does this NIF/email exist?"
 --    endpoint; uniqueness is enforced server-side by Auth/database constraints.
--- 4. A client cannot promote their own profile to admin because the trigger blocks
+-- 4. Client accounts have a server-side unique NIF constraint; an administrator
+--    cannot delete their own account through the application.
+-- 5. A client cannot promote their own profile to admin because the trigger blocks
 --    role changes unless the caller is already an administrator.
--- 5. Product availability is enforced again by create_order on the server.
+-- 6. Product availability is enforced again by create_order on the server.
 --
 -- To create the first administrator, register the account normally and then use
 -- Supabase Table Editor on public.profiles to change only that account's role to

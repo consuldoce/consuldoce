@@ -1,3 +1,20 @@
+CONSULDOCE — versão 68
+
+## Versão v68
+- Correção: fotografias que ficavam pretas depois de carregadas. A preparação da imagem (canvas 800 × 1000, fundo branco) passa a verificar se o resultado ficou preto; se ficar, repete com um método de leitura alternativo e, se mesmo assim falhar, mostra um erro em vez de guardar uma imagem preta.
+- Mantém a exportação **Exportar artigos (Excel)** da v67.
+- Cache do Service Worker atualizada (consuldoce-v68).
+
+CONSULDOCE — versão 67
+
+## Versão v67
+- Administração → **Produtos**: novo botão **Exportar artigos (Excel)** que descarrega todos os artigos da base de dados num ficheiro `artigos-consuldoce-AAAA-MM-DD.xlsx`.
+- As primeiras colunas usam os mesmos nomes da “Listagem de Artigos” do Sage (`Ref_`, `Produto`, `Descricao Curta`, `Familia`, `C_ Barras`, `Uni`, `Preco`), pelo que o ficheiro pode ser reimportado em **Importar dados → Importar artigos**.
+- Colunas adicionais apenas informativas: Stock físico, Em stock, Visível, Imagem e Atualizado em (ignoradas na reimportação).
+- A exportação inclui todos os produtos (publicados e ocultos), independentemente dos filtros da página, e funciona com mais de 1000 artigos.
+- Inclui a correção da v66 (carregamento de fotografias em lote).
+- Não é necessária migration SQL. Cache do Service Worker atualizada (consuldoce-v67).
+
 CONSULDOCE — versão 66
 
 ## Versão v66

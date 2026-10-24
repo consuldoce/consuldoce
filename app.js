@@ -478,6 +478,15 @@ function canvasLooksBlank(ctx,w,h){
 async function prepareProductImage(file){
   if(!file?.size) throw new Error('Ficheiro de imagem inválido.');
   const TARGET_W=800, TARGET_H=1000, PADDING=28;
+  const isJpeg=/^image\/jpe?g$/i.test(file.type||'');
+  // Fotografia já no formato do catálogo (800 × 1000 JPEG): segue tal como está, sem canvas.
+  // Evita falhas em navegadores que bloqueiam a leitura do canvas (ex.: Firefox com proteção contra fingerprinting).
+  if(isJpeg){
+    try{
+      const probe=await loadImageElement(file);
+      if(probe.naturalWidth===TARGET_W&&probe.naturalHeight===TARGET_H)return file;
+    }catch(_){}
+  }
   const canvas=document.createElement('canvas');
   canvas.width=TARGET_W; canvas.height=TARGET_H;
   const ctx=canvas.getContext('2d');
@@ -509,7 +518,11 @@ async function prepareProductImage(file){
     render(img);
     ok=!canvasLooksBlank(ctx,TARGET_W,TARGET_H);
   }
-  if(!ok) throw new Error('A fotografia ficou preta ao ser preparada neste navegador. Tente noutro navegador (Chrome/Edge) sem extensões de bloqueio de canvas.');
+  if(!ok){
+    // O navegador bloqueou o canvas: se for JPEG, guarda o original sem redimensionar (o catálogo ajusta a imagem por CSS).
+    if(isJpeg&&file.size<=8*1024*1024)return file;
+    throw new Error('A fotografia ficou preta ao ser preparada neste navegador. Use fotografias JPEG até 8 MB, ou tente noutro navegador (Chrome/Edge).');
+  }
   const blob=await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('Não foi possível preparar a imagem.')),'image/jpeg',0.92));
   return new File([blob],`${String(file.name||'produto').replace(/\.[^.]+$/,'')}.jpg`,{type:'image/jpeg',lastModified:Date.now()});
 }

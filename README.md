@@ -1,3 +1,10 @@
+CONSULDOCE — versão 69
+
+## Versão v69
+- Correção para Firefox: o Firefox pode bloquear a leitura do canvas (proteção contra fingerprinting) e deixar as fotografias pretas. Agora, fotografias JPEG já com 800 × 1000 px são carregadas diretamente, sem passar pelo canvas.
+- Se o canvas estiver bloqueado e a fotografia for JPEG até 8 MB, o original é guardado sem redimensionar (o catálogo ajusta a imagem por CSS) em vez de falhar.
+- Cache do Service Worker atualizada (consuldoce-v69).
+
 CONSULDOCE — versão 68
 
 ## Versão v68

@@ -1,3 +1,12 @@
+CONSULDOCE — versão 66
+
+## Versão v66
+- Administração → **Produtos**: novo botão **Exportar artigos (Excel)** que descarrega todos os artigos da base de dados num ficheiro `artigos-consuldoce-AAAA-MM-DD.xlsx`.
+- As primeiras colunas usam os mesmos nomes da “Listagem de Artigos” do Sage (`Ref_`, `Produto`, `Descricao Curta`, `Familia`, `C_ Barras`, `Uni`, `Preco`), pelo que o ficheiro pode ser reimportado em **Importar dados → Importar artigos**.
+- Colunas adicionais apenas informativas: Stock físico, Em stock, Visível, Imagem e Atualizado em (ignoradas na reimportação).
+- A exportação inclui todos os produtos (publicados e ocultos), independentemente dos filtros da página, e funciona com mais de 1000 artigos.
+- Não é necessária migration SQL. Cache do Service Worker atualizada.
+
 CONSULDOCE — versão 65
 
 ## Versão v65

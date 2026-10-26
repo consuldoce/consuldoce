@@ -1,3 +1,14 @@
+CONSULDOCE — versão 70
+
+## Versão v70
+- Administração → **Produtos**: a categoria de cada produto pode ser alterada diretamente na tabela (coluna **Categoria**). Escreva ou escolha uma categoria da lista e carregue em Enter (Esc cancela).
+- Novo botão **Gerir categorias**: lista todas as categorias com o número de produtos e permite **renomear** (todos os produtos passam para o novo nome), **juntar** duas categorias (renomeando para o nome de uma existente) e **eliminar** uma categoria (os produtos passam para outra categoria à escolha).
+- Nova ação em lote **Mudar categoria**: aplica uma categoria (existente ou nova) a todos os produtos selecionados.
+- No editor de produto, o campo Categoria sugere as categorias existentes, evitando duplicados com grafias diferentes (maiúsculas/minúsculas são reconhecidas como a mesma categoria).
+- **Importar artigos** (Sage): nova opção, ativa por omissão, **Manter as categorias alteradas no site**. Os artigos que já existem mantêm a categoria definida no site; a Família do Sage só é usada para artigos novos. Desative a opção se quiser repor as famílias do Sage.
+- O catálogo dos clientes usa automaticamente as categorias atualizadas.
+- Não é necessária migration SQL (as categorias continuam a ser o campo `category` dos produtos). Cache do Service Worker atualizada (consuldoce-v70).
+
 CONSULDOCE — versão 69
 
 ## Versão v69

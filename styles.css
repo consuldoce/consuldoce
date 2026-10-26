@@ -214,3 +214,8 @@
 @media(max-width:1100px){.client-column-filters{grid-template-columns:repeat(3,minmax(140px,1fr))}}
 @media(max-width:700px){.client-filter-toolbar{grid-template-columns:1fr}.client-column-filters{grid-template-columns:repeat(2,minmax(130px,1fr))}}
 @media(max-width:460px){.client-column-filters{grid-template-columns:1fr}}
+/* v70: edição direta da categoria na lista de produtos */
+.table .cat-inline{min-width:150px;width:190px;padding:7px 9px;font-size:12px;border-color:transparent;background:#faf6fa}
+.table .cat-inline:hover{border-color:#dcd2df;background:#fff}
+.table .cat-inline:focus{border-color:var(--purple-3);background:#fff}
+.table .cat-inline:disabled{opacity:.6}

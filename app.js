@@ -351,9 +351,75 @@ function openProductImagePreview(id){
   const p=(window.__adminProducts||[]).find(x=>x.id===id);
   if(!p?.image_url)return;
   document.getElementById('imagePreviewModal')?.remove();
-  document.body.insertAdjacentHTML('beforeend',`<div id="imagePreviewModal" class="modal open image-preview-modal" data-action="close-image-preview"><div class="image-preview-card"><div class="modal-head"><div><div class="eyebrow">Imagem do produto</div><h2 style="margin:4px 0">${esc(p.name||'Produto')}</h2><div class="sku">Ref. ${esc(p.sku||'—')}</div></div><button class="btn btn-light" data-action="close-image-preview">Fechar</button></div><div class="image-preview-body"><img src="${esc(p.image_url)}" alt="${esc(p.name||'Produto')}"></div></div></div>`);
+  document.body.insertAdjacentHTML('beforeend',`<div id="imagePreviewModal" class="modal open image-preview-modal" data-action="close-image-preview"><div class="image-preview-card"><div class="modal-head"><div><div class="eyebrow">Imagem do produto</div><h2 style="margin:4px 0">${esc(p.name||'Produto')}</h2><div class="sku">Ref. ${esc(p.sku||'—')}</div></div><div style="display:flex;gap:8px;align-items:start"><button class="btn btn-light" data-action="open-photo-move" data-id="${esc(p.id)}">Associar a outro produto</button><button class="btn btn-light" data-action="close-image-preview">Fechar</button></div></div><div class="image-preview-body"><img src="${esc(p.image_url)}" alt="${esc(p.name||'Produto')}"></div></div></div>`);
 }
-function renderAdminProductRows(list){const body=document.getElementById('adminProductsBody');if(!body)return;body.innerHTML=list.length?list.map(p=>`<tr><td><input type="checkbox" ${window.__selectedProducts?.has(p.id)?'checked':''} data-action="toggle-admin-product" data-id="${esc(p.id)}"></td><td><strong>${esc(p.sku||'—')}</strong></td><td>${p.image_url?`<button class="image-thumb-button" type="button" data-action="preview-product-image" data-id="${esc(p.id)}" title="Ver imagem"><img src="${esc(p.image_url)}" alt="Ver imagem" class="admin-image-thumb"></button>`:'—'}</td><td><strong>${esc(p.name||'—')}</strong></td><td><input class="field cat-inline" list="adminCategoryList" value="${esc(p.category||'')}" placeholder="Sem categoria" title="Alterar categoria (Enter para guardar)" data-action="inline-category" data-id="${esc(p.id)}"></td><td><span class="status ${p.in_stock?'done':'cancelled'}">${p.in_stock?'Em stock':'Fora de stock'}</span></td><td>${esc(p.stock_quantity??0)}</td><td><span class="status ${p.active?'done':''}">${p.active?'Sim':'Não'}</span></td><td><button class="btn btn-light btn-small" data-action="edit-product" data-id="${esc(p.id)}">Editar</button></td></tr>`).join(''):'<tr><td colspan="9"><div class="empty">Não foram encontrados produtos.</div></td></tr>';updateSelectedCount()}
+function photoMoveProductLabel(p){return `${p.sku||'—'} · ${p.name||''}`}
+function photoMoveFindTarget(value){const v=String(value||'').trim();if(!v)return null;const list=window.__adminProducts||[];const sku=v.split(' · ')[0].trim().toLowerCase();return list.find(p=>String(p.sku||'').trim().toLowerCase()===sku)||list.find(p=>photoMoveProductLabel(p).toLowerCase()===v.toLowerCase())||null}
+function openPhotoMoveModal(id){
+  const p=(window.__adminProducts||[]).find(x=>String(x.id)===String(id));
+  if(!p?.image_url){toast('Este produto não tem fotografia.');return}
+  document.getElementById('imagePreviewModal')?.remove();
+  document.getElementById('photoMoveModal')?.remove();
+  window.__photoMoveSource=p.id;window.__photoMoveTarget=null;
+  const options=(window.__adminProducts||[]).filter(x=>x.id!==p.id).map(x=>`<option value="${esc(photoMoveProductLabel(x))}"></option>`).join('');
+  document.body.insertAdjacentHTML('beforeend',`<div id="photoMoveModal" class="modal open"><div class="modal-card" style="width:min(760px,100%)"><div class="modal-head"><div><div class="eyebrow">Fotografias</div><h2 style="margin:4px 0">Associar foto a outro produto</h2></div><button class="btn btn-light" data-action="close-photo-move">Fechar</button></div><div class="modal-body stack"><div class="photo-move-grid"><div class="photo-move-box"><div class="label">Foto atual de</div><img src="${esc(p.image_url)}" alt="" class="photo-move-img"><div><strong>${esc(p.name||'—')}</strong></div><div class="sku">Ref. ${esc(p.sku||'—')}</div></div><div class="photo-move-arrow">→</div><div class="photo-move-box" id="photoMoveTarget"><div class="label">Produto de destino</div><div class="photo-move-img photo-move-empty">Escolha o produto</div></div></div><div class="form-group"><label class="label" for="photoMoveSearch">Produto correto (pesquise pela referência ou pelo nome)</label><input id="photoMoveSearch" class="field" list="photoMoveList" autocomplete="off" placeholder="Ex.: 12345 ou nome do produto" data-action="photo-move-search"><datalist id="photoMoveList">${options}</datalist></div><div id="photoMoveActions" class="hint">A fotografia é renomeada com a referência do produto de destino.</div></div></div></div>`);
+  document.getElementById('photoMoveSearch').focus();
+}
+function updatePhotoMoveTarget(value){
+  const src=(window.__adminProducts||[]).find(x=>x.id===window.__photoMoveSource);
+  const box=document.getElementById('photoMoveTarget'),actions=document.getElementById('photoMoveActions');
+  if(!src||!box||!actions)return;
+  const t=photoMoveFindTarget(value);
+  window.__photoMoveTarget=t&&t.id!==src.id?t.id:null;
+  if(!window.__photoMoveTarget){box.innerHTML='<div class="label">Produto de destino</div><div class="photo-move-img photo-move-empty">Escolha o produto</div>';actions.className='hint';actions.innerHTML=String(value||'').trim()?'Nenhum produto encontrado com essa referência. Escolha um produto da lista.':'A fotografia é renomeada com a referência do produto de destino.';return}
+  box.innerHTML=`<div class="label">Produto de destino</div>${t.image_url?`<img src="${esc(t.image_url)}" alt="" class="photo-move-img">`:'<div class="photo-move-img photo-move-empty">Sem fotografia</div>'}<div><strong>${esc(t.name||'—')}</strong></div><div class="sku">Ref. ${esc(t.sku||'—')}</div>`;
+  actions.className='stack';
+  actions.innerHTML=t.image_url
+    ?`<div class="notice">O produto <strong>${esc(t.sku)}</strong> já tem fotografia. Escolha o que fazer:</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-primary" data-action="apply-photo-move" data-mode="swap">Trocar as duas fotos</button><button class="btn btn-danger" data-action="apply-photo-move" data-mode="replace">Substituir (apagar a foto do destino)</button></div><span class="hint"><strong>Trocar</strong>: cada produto fica com a foto do outro, ambas renomeadas com a nova referência. <strong>Substituir</strong>: ${esc(src.sku)} fica sem foto e a foto antiga de ${esc(t.sku)} é apagada.</span>`
+    :`<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-primary" data-action="apply-photo-move" data-mode="move">Mover foto para ${esc(t.sku)}</button></div><span class="hint">A foto passa para <strong>${esc(t.sku)}</strong> e é renomeada com esta referência. O produto ${esc(src.sku)} fica sem fotografia.</span>`;
+}
+function photoStorageNameForSku(sku,oldPath){const ext=(String(oldPath||'').match(/\.[a-z0-9]{2,5}$/i)?.[0]||'.jpg').toLowerCase();return `products/${String(sku||'produto').trim().replace(/[^a-zA-Z0-9_-]/g,'_')}-${(crypto.randomUUID?.()||Math.random().toString(36).slice(2)+Date.now().toString(36)).replace(/-/g,'').slice(0,8)}${ext}`}
+async function renameProductPhoto(url,sku){
+  const from=storagePathFromImageUrl(url);
+  if(!from)return {url,from:null,to:null};
+  const to=photoStorageNameForSku(sku,from);
+  const {error}=await sb.storage.from('product-images').move(from,to);
+  if(error)throw error;
+  return {url:sb.storage.from('product-images').getPublicUrl(to).data.publicUrl,from,to};
+}
+async function applyPhotoMove(mode){
+  const list=window.__adminProducts||[];
+  const src=list.find(x=>x.id===window.__photoMoveSource),dst=list.find(x=>x.id===window.__photoMoveTarget);
+  if(!src?.image_url||!dst){toast('Escolha o produto de destino.');return}
+  if(mode==='replace'&&!confirm(`A fotografia atual de ${dst.sku} vai ser apagada definitivamente e substituída pela de ${src.sku}. Continuar?`))return;
+  const buttons=[...document.querySelectorAll('#photoMoveModal button')];buttons.forEach(b=>b.disabled=true);
+  const oldSrc=src.image_url,oldDst=dst.image_url||null;
+  const renamed=[];let dstUpdated=false;
+  showProgress('A associar fotografia…',20,`${src.sku} → ${dst.sku}`);
+  try{
+    const a=await renameProductPhoto(oldSrc,dst.sku);renamed.push(a);
+    let b=null;
+    if(mode==='swap'&&oldDst){showProgress('A trocar fotografias…',45,`${dst.sku} → ${src.sku}`);b=await renameProductPhoto(oldDst,src.sku);renamed.push(b)}
+    showProgress('A guardar alterações…',70,'A atualizar os produtos');
+    const r1=await sb.from('products').update({image_url:a.url}).eq('id',dst.id);if(r1.error)throw r1.error;dstUpdated=true;
+    const r2=await sb.from('products').update({image_url:b?b.url:null}).eq('id',src.id);if(r2.error)throw r2.error;
+    let warning='';
+    if(mode==='replace'&&oldDst){const path=storagePathFromImageUrl(oldDst);if(path){const {error}=await sb.storage.from('product-images').remove([path]);if(error)warning=` (não foi possível apagar a foto antiga: ${error.message})`}}
+    dst.image_url=a.url;src.image_url=b?b.url:null;
+    document.getElementById('photoMoveModal')?.remove();
+    renderAdminProductRows(filteredAdminProducts());
+    showProgress('Fotografia associada',100,`${src.sku} → ${dst.sku}`);setTimeout(hideProgress,600);
+    toast((mode==='swap'&&oldDst?`Fotos de ${src.sku} e ${dst.sku} trocadas.`:`Foto associada a ${dst.sku}.`)+warning);
+  }catch(err){
+    console.error(err);
+    if(dstUpdated)await sb.from('products').update({image_url:oldDst}).eq('id',dst.id);
+    for(const m of renamed.reverse()){if(m.from)await sb.storage.from('product-images').move(m.to,m.from)}
+    hideProgress();
+    toast(`Não foi possível associar a fotografia: ${err.message||'erro desconhecido'}. Nada foi alterado.`);
+    buttons.forEach(b=>b.disabled=false);
+  }
+}
+function renderAdminProductRows(list){const body=document.getElementById('adminProductsBody');if(!body)return;body.innerHTML=list.length?list.map(p=>`<tr><td><input type="checkbox" ${window.__selectedProducts?.has(p.id)?'checked':''} data-action="toggle-admin-product" data-id="${esc(p.id)}"></td><td><strong>${esc(p.sku||'—')}</strong></td><td>${p.image_url?`<button class="image-thumb-button" type="button" data-action="preview-product-image" data-id="${esc(p.id)}" title="Ver imagem"><img src="${esc(p.image_url)}" alt="Ver imagem" class="admin-image-thumb"></button>`:'—'}</td><td><strong>${esc(p.name||'—')}</strong></td><td><input class="field cat-inline" list="adminCategoryList" value="${esc(p.category||'')}" placeholder="Sem categoria" title="Alterar categoria (Enter para guardar)" data-action="inline-category" data-id="${esc(p.id)}"></td><td><span class="status ${p.in_stock?'done':'cancelled'}">${p.in_stock?'Em stock':'Fora de stock'}</span></td><td>${esc(p.stock_quantity??0)}</td><td><span class="status ${p.active?'done':''}">${p.active?'Sim':'Não'}</span></td><td><div style="display:flex;gap:6px"><button class="btn btn-light btn-small" data-action="edit-product" data-id="${esc(p.id)}">Editar</button>${p.image_url?`<button class="btn btn-light btn-small" data-action="open-photo-move" data-id="${esc(p.id)}" title="Associar esta foto a outro produto">Mover foto</button>`:''}</div></td></tr>`).join(''):'<tr><td colspan="9"><div class="empty">Não foram encontrados produtos.</div></td></tr>';updateSelectedCount()}
 function toggleAdminProduct(id,checked){window.__selectedProducts=window.__selectedProducts||new Set();checked?window.__selectedProducts.add(id):window.__selectedProducts.delete(id);updateSelectedCount()}
 function toggleAllAdminProducts(checked){window.__selectedProducts=window.__selectedProducts||new Set();filteredAdminProducts().forEach(p=>checked?window.__selectedProducts.add(p.id):window.__selectedProducts.delete(p.id));renderAdminProductRows(filteredAdminProducts())}
 function updateSelectedCount(){const el=document.getElementById('selectedCount');if(el)el.textContent=`${window.__selectedProducts?.size||0} selecionados`}
@@ -784,6 +850,9 @@ document.addEventListener('click',(event)=>{
     else if(a==='bulk-delete-products') bulkDeleteSelectedProducts();
     else if(a==='preview-product-image') openProductImagePreview(el.dataset.id);
     else if(a==='close-image-preview') document.getElementById('imagePreviewModal')?.remove();
+    else if(a==='open-photo-move') openPhotoMoveModal(el.dataset.id);
+    else if(a==='close-photo-move') document.getElementById('photoMoveModal')?.remove();
+    else if(a==='apply-photo-move') applyPhotoMove(el.dataset.mode);
     else if(a==='close-product') document.getElementById('productModal')?.remove();
     else if(a==='import-mode') { state.importMode=el.dataset.mode; render(); }
     else if(a==='import-excel') importExcel();
@@ -808,6 +877,7 @@ document.addEventListener('input',(event)=>{
     else if(a==='cart-set-qty') { setQty(el.dataset.id, el.value); openCart(); }
     else if(a==='filter-admin') filterAdminProducts();
     else if(a==='filter-admin-clients') filterAdminClients();
+    else if(a==='photo-move-search') updatePhotoMoveTarget(el.value);
   } catch(err) { console.error('CONSULDOCE input action error', a, err); }
 });
 document.addEventListener('change',(event)=>{

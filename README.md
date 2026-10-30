@@ -1,3 +1,16 @@
+CONSULDOCE — versão 71
+
+## Versão v71
+- Administração → **Produtos**: novo botão **Mover foto** (na linha de cada produto com fotografia) e botão **Associar a outro produto** na pré-visualização da imagem, para corrigir fotografias associadas ao produto errado.
+- Escolhe-se o produto correto pesquisando pela referência ou pelo nome. A fotografia é **renomeada no armazenamento** com a referência do novo produto (`products/REF-xxxxxxxx.jpg`, o mesmo formato do carregamento em lote; o sufixo curto evita que o browser/CDN mostre a imagem antiga em cache).
+- Se o produto de destino **não tiver foto**, a foto passa para ele e o produto de origem fica sem fotografia.
+- Se o produto de destino **já tiver foto**, pode escolher:
+  - **Trocar as duas fotos**: cada produto fica com a foto do outro, ambas renomeadas com a nova referência;
+  - **Substituir**: o destino fica com a foto da origem, a origem fica sem foto e a foto antiga do destino é apagada (pede confirmação).
+- Se algum passo falhar, as alterações já feitas são revertidas (nomes dos ficheiros e produtos voltam ao estado anterior).
+- Imagens com URL externo (fora do Supabase Storage) são reassociadas sem renomear.
+- Não é necessária migration SQL (usa as políticas de Storage de administrador já existentes). Cache do Service Worker atualizada (consuldoce-v71).
+
 CONSULDOCE — versão 70
 
 ## Versão v70

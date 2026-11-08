@@ -1,3 +1,16 @@
+CONSULDOCE — versão 72
+
+## Versão v72
+- Administração → **Produtos**: a pesquisa, a categoria e a ordenação escolhidas **mantêm-se** depois de guardar um produto (e após qualquer ação que recarregue a lista: mover foto, ações em lote, mudar categoria). A posição na página também é mantida. Os filtros ficam guardados durante a sessão do browser, mesmo ao mudar de separador.
+- As fotografias passam a ter **sempre o nome da referência do produto**: `products/REF.jpg` (caracteres especiais da referência são substituídos por `_`).
+  - **Editar produto → Carregar imagem**: o ficheiro é guardado como `REF.jpg`, seja qual for o nome original; a imagem antiga com outro nome é apagada.
+  - Se a **referência (SKU) for alterada**, ou se o campo *URL da imagem* apontar para um ficheiro do armazenamento com outro nome, a imagem é **renomeada automaticamente** ao guardar.
+  - **Carregamento em lote** (Importar dados) e **Mover foto** também gravam com o nome exato `REF.jpg` (na troca de fotos é usado um nome temporário para não haver conflito).
+  - Novo botão **Corrigir nomes das imagens** em Produtos: renomeia de uma vez todas as fotografias já existentes (ex.: `REF-1a2b3c4d.jpg` ou nomes aleatórios) para `REF.jpg`.
+  - Para o browser não mostrar a imagem antiga em cache, o endereço guardado leva um parâmetro de versão (`REF.jpg?v=…`); o nome do ficheiro não muda.
+  - Imagens com URL externo (fora do Supabase Storage) não são renomeadas. Se a imagem indicada pertencer a outro produto, é pedido que use **Mover foto**.
+- Não é necessária migration SQL. Cache do Service Worker atualizada (consuldoce-v72).
+
 CONSULDOCE — versão 71
 
 ## Versão v71

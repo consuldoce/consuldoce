@@ -9,6 +9,7 @@ CONSULDOCE — versão 72
   - Novo botão **Corrigir nomes das imagens** em Produtos: renomeia de uma vez todas as fotografias já existentes (ex.: `REF-1a2b3c4d.jpg` ou nomes aleatórios) para `REF.jpg`.
   - Para o browser não mostrar a imagem antiga em cache, o endereço guardado leva um parâmetro de versão (`REF.jpg?v=…`); o nome do ficheiro não muda.
   - Imagens com URL externo (fora do Supabase Storage) não são renomeadas. Se a imagem indicada pertencer a outro produto, é pedido que use **Mover foto**.
+- Novo botão **Descarregar todas as imagens** em Produtos: descarrega `fotografias-consuldoce-AAAA-MM-DD.zip` com todas as fotografias, cada uma com o nome da referência (`REF.jpg`). Depois de alterar uma imagem (mantendo o nome), basta voltar a carregá-la em **Importar dados → carregamento de fotografias em lote** e fica associada ao produto certo. O zip inclui um `LEIA-ME.txt` com os produtos sem fotografia e eventuais erros.
 - Não é necessária migration SQL. Cache do Service Worker atualizada (consuldoce-v72).
 
 CONSULDOCE — versão 71
